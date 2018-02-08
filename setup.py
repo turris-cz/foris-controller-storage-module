@@ -43,7 +43,7 @@ setup(
     },
     scripts=[],
     description=DESCRIPTION,
-    long_description=DESCRIPPTION,
+    long_description=DESCRIPTION,
     requires=[
         'foris_controller',
     ],
