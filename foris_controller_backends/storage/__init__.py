@@ -39,7 +39,8 @@ class SettingsUci(object):
             raise LookupError("Can't get UUID for device '{}' from '{}'!".format(old_device, blkid))
         return { 'uuid': uuid,
                  'old_uuid': old_uuid,
-                 'old_device': old_device }
+                 'old_device': old_device,
+                 'formating': os.path.isfile('/tmp/formating') }
 
     def update_srv(self, srv):
 

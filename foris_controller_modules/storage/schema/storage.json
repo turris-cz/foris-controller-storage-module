@@ -20,10 +20,11 @@
                     "properties": {
                         "uuid": {"type": "string", "minimum": 5, "maximum": 40},
                         "old_uuid": {"type": "string", "minimum": 5, "maximum": 40},
-                        "old_device": {"type": "string"}
+                        "old_device": {"type": "string"},
+                        "formating": {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["uuid", "old_uuid"]
+                    "required": ["uuid", "old_uuid", "old_device", "formating" ]
                 }
             },
             "additionalProperties": false,
