@@ -35,7 +35,7 @@ start() {
 
                 # Migrate
                 if [ "`ls -1 /tmp/old-srv/srv | wc -l`" -gt 0 ]; then
-                        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv || die "Moving files failed, please check manually what went wrong and what files were left on your old drive"
+                        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv || die "Moving files failed, please check manually what went wrong and what files were left on your old drive."
                         find /tmp/old-srv/srv -depth -type d -empty -delete
                 fi
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
