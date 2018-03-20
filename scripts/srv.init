@@ -47,6 +47,7 @@ start() {
 		fi
                 rm -rf /tmp/old-srv
 		uci set storage.srv.old_uuid=""
+		uci commit storage.srv.old_uuid
 		TEXT="Your /srv was successfully moved from $OLD_DEV to $DEV"
 		create_notification -s news "$TEXT" "$TEXT"
         fi
