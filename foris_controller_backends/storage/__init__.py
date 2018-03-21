@@ -56,33 +56,70 @@ class DriveManager(object):
         stdout_value = proc.communicate()[0]
         ret = []
         blk_rex = re.compile('^(mmcblk.*|mtd.*)$')
+        uuid_rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".*')
+        label_rex = re.compile('^/dev/([^:]*):.* LABEL="([^"]*)".*')
+        type_rex = re.compile('^/dev/([^:]*):.* TYPE="([^"]*)".*')
         for dev in os.listdir('/sys/class/block'):
             grp = blk_rex.match(dev)
             if not grp:
                 proc = subprocess.Popen(['blkid', "/dev/{}".format(dev)], stdout=subprocess.PIPE)
                 blkid = proc.communicate()[0].strip()
-                rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*')
-                grp = rex.match(blkid)
-                fs = ''
+                grp = uuid_rex.match(blkid)
                 uuid = ''
                 if grp:
-                    fs = grp.group(3)
                     uuid = grp.group(2)
-                vendor = ''
+                grp = type_rex.match(blkid)
+                fs = ''
+                if grp:
+                    fs = grp.group(2)
+                grp = label_rex.match(blkid)
+                tmp = ''
+                if grp:
+                    description = grp.group(2)
+                else:
+                    description = ''
+                tmp = ''
                 try:
                     fl = open("/sys/class/block/{}/device/vendor".format(dev), 'r')
                 except:
                     fl = False
                 if fl:
-                    vendor = fl.read().strip()
-                model = ''
+                    tmp = fl.read().strip()
+                if tmp:
+                    if description:
+                        description = '{} - {}'.format(description, tmp)
+                    else:
+                        description = tmp
+                tmp = ''
                 try:
                     fl = open("/sys/class/block/{}/device/model".format(dev), 'r')
                 except:
                     fl = False
                 if fl:
-                    model = fl.read().strip()
-                ret = ret + [ { "dev": dev, "description": "{} {}".format(vendor, model), "fs": fs, "uuid": uuid } ]
+                    tmp = fl.read().strip()
+                if tmp:
+                    if description:
+                        description = '{} {}'.format(description, tmp)
+                    else:
+                        description = tmp
+                tmp = ''
+                try:
+                    fl = open("/sys/class/block/{}/size".format(dev), 'r')
+                except:
+                    fl = False
+                if fl:
+                    tmp = fl.read().strip()
+                if tmp:
+                    size = int(tmp) / (2 * 1024 * 1024)
+                    if(size > 1000):
+                        tmp = '{} {}'.format(size / 1000, size % 1000)
+                    else:
+                        tmp = str(size)
+                    if description:
+                        description = '{} ({} GiB)'.format(description, tmp)
+                    else:
+                        description = 'Size {} GiB'.format(tmp)
+                ret = ret + [ { "dev": dev, "description": description, "fs": fs, "uuid": uuid } ]
         return { "drives": ret }
 
     def prepare_srv_drive(self, srv):
