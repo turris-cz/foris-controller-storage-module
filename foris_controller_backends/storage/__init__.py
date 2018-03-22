@@ -20,7 +20,7 @@ class SettingsUci(object):
         old_device = ""
         proc = subprocess.Popen(['stat', '-c', '%m', '/srv'], stdout=subprocess.PIPE)
         mnt = proc.communicate()[0].strip()
-        rex = re.compile('^(/dev/[^ ]*) {} .*'.format(mnt))
+        rex = re.compile('^(/dev/[^ ]*|ubi[^ ]*) {} .*'.format(mnt))
         with open('/proc/mounts', 'r') as f:
             for ln in f:
                 grp = rex.match(ln)
@@ -29,14 +29,17 @@ class SettingsUci(object):
                     break
         if(old_device == ""):
             raise LookupError("Can't find device that mounts as '{}' and thus can't decide what provides /srv!".format(mnt))
-        proc = subprocess.Popen(['blkid', old_device], stdout=subprocess.PIPE)
-        blkid = proc.communicate()[0].strip()
-        rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*')
-        grp = rex.match(blkid)
-        if grp:
-            old_uuid = grp.group(2)
+        if old_device == "/":
+            old_uuid = "rootfs"
         else:
-            raise LookupError("Can't get UUID for device '{}' from '{}'!".format(old_device, blkid))
+            proc = subprocess.Popen(['blkid', old_device], stdout=subprocess.PIPE)
+            blkid = proc.communicate()[0].strip()
+            rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*')
+            grp = rex.match(blkid)
+            if grp:
+                old_uuid = grp.group(2)
+            else:
+                raise LookupError("Can't get UUID for device '{}' from '{}'!".format(old_device, blkid))
         return { 'uuid': uuid,
                  'old_uuid': old_uuid,
                  'old_device': old_device,

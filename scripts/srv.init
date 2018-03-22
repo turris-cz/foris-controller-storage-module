@@ -22,8 +22,15 @@ start() {
 	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID"
 	mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
 	OLD_DEV=""
-        [ -z "$OLD_UUID" ] || OLD_DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$OLD_UUID"'".*|\1|p')"
 	ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
+	[ -n "$ROOT_DEV" ] || ROOT_DEV="rootfs"
+        if [ -n "$OLD_UUID" ]; then
+		if [ "x$OLD_UUID" = xrootfs ]; then
+			OLD_DEV="$ROOT_DEV"
+		else
+			OLD_DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$OLD_UUID"'".*|\1|p')"
+		fi
+	fi
         if [ -n "$OLD_DEV" ]; then
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
 			mkdir -p /tmp/old-srv
