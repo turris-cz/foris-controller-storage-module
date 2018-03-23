@@ -29,7 +29,7 @@ class SettingsUci(object):
                     break
         if(old_device == ""):
             raise LookupError("Can't find device that mounts as '{}' and thus can't decide what provides /srv!".format(mnt))
-        if old_device == "/":
+        if mnt == "/":
             old_uuid = "rootfs"
         else:
             proc = subprocess.Popen(['blkid', old_device], stdout=subprocess.PIPE)
