@@ -20,6 +20,11 @@ start() {
         [ -n "$UUID" ] || exit 0
 	DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p')"
 	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID"
+	if [ -L /srv ]; then
+		link_tgt="$(readlink /srv)"
+		rm /srv
+		mkdir -p /srv
+	fi
 	mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
 	OLD_DEV=""
 	ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
@@ -31,10 +36,13 @@ start() {
 			OLD_DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$OLD_UUID"'".*|\1|p')"
 		fi
 	fi
-        if [ -n "$OLD_DEV" ]; then
+        if [ -n "$OLD_DEV" ] || [ -n "$link_tgt" ]; then
+		mkdir -p /tmp/old-srv
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-			mkdir -p /tmp/old-srv
-			mount -o bind / /tmp/old-srv
+			mount -o bind /"$link_gtg" /tmp/old-srv
+		elif [ -n "$link_tgt" ]; then
+			mkdir -p /tmp/old-srv/srv
+			mount -o bind /"$link_gtg" /tmp/old-srv/srv
 		else
 			mkdir -p /tmp/old-srv/srv
 			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV"
@@ -55,8 +63,11 @@ start() {
                 rm -rf /tmp/old-srv
 		uci set storage.srv.old_uuid=""
 		uci commit storage.srv.old_uuid
-		TEXT="Your /srv was successfully moved from $OLD_DEV to $DEV"
-		create_notification -s news "$TEXT" "$TEXT"
+		if [ -n "$link_tgt" ]; then
+			create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually"
+		else
+			create_notification -s news "Your /srv was successfully moved from $OLD_DEV to $DEV"
+		fi
         fi
 }
 
