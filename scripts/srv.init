@@ -39,10 +39,10 @@ start() {
         if [ -n "$OLD_DEV" ] || [ -n "$link_tgt" ]; then
 		mkdir -p /tmp/old-srv
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-			mount -o bind /"$link_gtg" /tmp/old-srv
+			mount -o bind / /tmp/old-srv
 		elif [ -n "$link_tgt" ]; then
 			mkdir -p /tmp/old-srv/srv
-			mount -o bind /"$link_gtg" /tmp/old-srv/srv
+			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv
 		else
 			mkdir -p /tmp/old-srv/srv
 			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV"

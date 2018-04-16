@@ -41,9 +41,13 @@ UUID="$(echo "$RES" | sed -n 's|Filesystem UUID: \([0-9a-f-]*\)|\1|p')"
 [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
 SRV="$(stat -c %m /srv/)"
 SRV_DEV=""
-[ -z "$SRV" ] || SRV_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p')"
 SRV_UUID=""
-[ -z "$SRV_DEV" ] || SRV_UUID="$(blkid "$SRV_DEV" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
+if [ -n "$(cat /proc/mounts | grep '^\(ubi[^[:blank:]]*\) '"$SRV"' .*')" ]; then
+    SRV_UUID="rootfs"
+else
+    [ -z "$SRV" ] || SRV_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p')"
+    [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid "$SRV_DEV" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
+fi
 [ -n "$SRV_UUID" ] || die "Can't find your current srv location"
 uci set storage.srv.uuid="$UUID"
 uci set storage.srv.old_uuid="$SRV_UUID"
