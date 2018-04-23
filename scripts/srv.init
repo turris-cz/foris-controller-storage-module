@@ -26,10 +26,10 @@ start() {
 		mkdir -p /srv
 	fi
 	if [ -n "$(blkid "$DEV" | grep TYPE="ext4")" ]; then
-		mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
+		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
 		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features"
 	else
-		mount -t btrfs -o subvol=@,nodatacow "$DEV" /srv || die "Can't mount $DEV as /srv"
+		mount -t btrfs -o subvol=@,nodatacow,noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
 	fi
 	OLD_DEV=""
 	ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
