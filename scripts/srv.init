@@ -25,7 +25,11 @@ start() {
 		rm /srv
 		mkdir -p /srv
 	fi
-	mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
+	if [ -n "$(blkid "$DEV" | grep TYPE="ext4")" ]; then
+		mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
+	else
+		mount -t btrfs -o subvol=@,nodatacow "$DEV" /srv || die "Can't mount $DEV as /srv"
+	fi
 	OLD_DEV=""
 	ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
 	[ -n "$ROOT_DEV" ] || ROOT_DEV="rootfs"

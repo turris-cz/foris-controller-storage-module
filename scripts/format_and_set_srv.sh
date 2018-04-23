@@ -34,11 +34,16 @@ if expr "$1" : '^.*[a-z]$' > /dev/null; then
         umount -fl "$i" || true
     done
 fi
-RES="$(mkfs.ext4 -q -F -F -L srv -U random -e continue "$1" 2>&1 || echo FAILFAILFAIL)"
+RES="$(mkfs.btrfs -f -L srv "$1" 2>&1 || echo FAILFAILFAIL)"
 [ -z "$(echo "$RES" | grep FAILFAILFAIL)" ] || die "Formatting drive failed, try unpluging it and repluging it in again."
 UUID="$(echo "$RES" | sed -n 's|Filesystem UUID: \([0-9a-f-]*\)|\1|p')"
 [ -n "$UUID" ] || UUID="$(blkid "$1" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
 [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
+mkdir -p /tmp/storage_plugin_formating
+mount -t btrfs "$1" /tmp/storage_plugin_formating || die "Can't mount newly formatted drive."
+btrfs subvol create /tmp/storage_plugin_formating/@
+umount /tmp/storage_plugin_formating
+rmdir /tmp/storage_plugin_formating
 SRV="$(stat -c %m /srv/)"
 SRV_DEV=""
 SRV_UUID=""
