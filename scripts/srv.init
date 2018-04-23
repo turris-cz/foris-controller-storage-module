@@ -8,7 +8,7 @@ status() {
 }
 
 die() {
-	create_notification -n error "$1" "$1"
+	create_notification -n error "$1"
 	exit 1
 }
 
@@ -27,6 +27,7 @@ start() {
 	fi
 	if [ -n "$(blkid "$DEV" | grep TYPE="ext4")" ]; then
 		mount -t ext4 "$DEV" /srv || die "Can't mount $DEV as /srv"
+		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features"
 	else
 		mount -t btrfs -o subvol=@,nodatacow "$DEV" /srv || die "Can't mount $DEV as /srv"
 	fi
