@@ -28,20 +28,23 @@ else
 fi
 
 DISK="$1"
-umount -fl "$1"
+umount -fl "$1" > /dev/null 2>&1
 if expr "$1" : '^.*[a-z]$' > /dev/null; then
     for i in "$1"[0-9]; do
-        umount -fl "$i" || true
+        umount -fl "$i" > /dev/null 2>&1
     done
 fi
 RES="$(mkfs.btrfs -f -L srv "$1" 2>&1 || echo FAILFAILFAIL)"
-[ -z "$(echo "$RES" | grep FAILFAILFAIL)" ] || die "Formatting drive failed, try unpluging it and repluging it in again."
+[ -z "$(echo "$RES" | grep FAILFAILFAIL)" ] || die ")_(Formatting drive failed, try unpluging it and repluging it in again.
+
+Technical details:)_(
+$(echo "$RES" | grep -v FAILFAILFAIL)"
 UUID="$(echo "$RES" | sed -n 's|Filesystem UUID: \([0-9a-f-]*\)|\1|p')"
 [ -n "$UUID" ] || UUID="$(blkid "$1" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
 [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
 mkdir -p /tmp/storage_plugin_formating
 mount -t btrfs "$1" /tmp/storage_plugin_formating || die "Can't mount newly formatted drive."
-btrfs subvol create /tmp/storage_plugin_formating/@
+btrfs subvol create /tmp/storage_plugin_formating/@ || die "Can't create @ submodule."
 umount /tmp/storage_plugin_formating
 rmdir /tmp/storage_plugin_formating
 SRV="$(stat -c %m /srv/)"
