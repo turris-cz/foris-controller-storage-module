@@ -29,7 +29,7 @@ fi
 
 DISK="$1"
 umount -fl "$1" > /dev/null 2>&1
-if expr "$1" : '^.*[a-z]$' > /dev/null; then
+if expr "$1" : '.*[a-z]$' > /dev/null; then
     for i in "$1"[0-9]; do
         umount -fl "$i" > /dev/null 2>&1
     done
@@ -60,7 +60,7 @@ fi
 uci set storage.srv.uuid="$UUID"
 uci set storage.srv.old_uuid="$SRV_UUID"
 uci commit storage
-if expr "$1" : '^.*[a-z]$' > /dev/null; then
+if expr "$1" : '.*[a-z]$' > /dev/null; then
     partx -d "$1"
 fi
 TEXT="Your new disk for storing data has been setup successfully. All you need to do now is to reboot your router for changes to take effect. Be aware that if you have some local data stored on your current storage, those will get moved during reboot, so your next reboot might take quite some time."

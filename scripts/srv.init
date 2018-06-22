@@ -18,7 +18,11 @@ start() {
 	OLD_UUID="$(uci -q get storage.srv.old_uuid)"
 	DEV=""
         [ -n "$UUID" ] || exit 0
-	DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p')"
+	i=0
+	while [ $i -lt 10 ] && [ -z "$DEV" ]; do
+		DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p')"
+		sleep 1
+	done
 	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID"
 	if [ -L /srv ]; then
 		link_tgt="$(readlink /srv)"
