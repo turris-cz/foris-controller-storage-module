@@ -22,6 +22,7 @@ start() {
 	while [ $i -lt 10 ] && [ -z "$DEV" ]; do
 		DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p')"
 		sleep 1
+		i="$(expr $i + 1)"
 	done
 	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID"
 	if [ -L /srv ]; then
