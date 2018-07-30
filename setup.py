@@ -43,13 +43,16 @@ setup(
     },
     scripts=[],
     description=DESCRIPTION,
-    long_description=DESCRIPTION,
+    long_description=open('README.rst').read(),
     requires=[
         'foris_controller',
     ],
     setup_requires=[
+        'pytest-runner'
     ],
     tests_require=[
+        'pytest',
+        'foris-controller-testtools',
     ],
     include_package_data=True,
     zip_safe=False,

@@ -1,0 +1,10 @@
+{
+    "user": "stepan",
+    "access": {
+        "foris-controller-storage": {
+            "methods": [ "get_settings", "get_drives", "prepare_srv_drive"]
+        }
+    },
+    "publish": [ "foris-controller-storage" ],
+    "subscribe": [ "foris-controller-storage" ]
+}
