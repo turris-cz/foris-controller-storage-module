@@ -31,7 +31,16 @@ class MockStorageHandler(Handler, BaseMockHandler):
     old_device = "/dev/mmcblk0p1"
     old_uuid = "rootfs"
     uuid = ""
-    formating = False
+    formatting = False
+
+    drives = [
+        {
+            "fs": "btrfs",
+            "description": "srv - Generic Flash Disk (7 GiB)",
+            "dev": "sda",
+            "uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6"
+        }
+    ]
 
     @logger_wrapper(logger)
     def get_settings(self):
@@ -39,12 +48,12 @@ class MockStorageHandler(Handler, BaseMockHandler):
             "old_device": MockStorageHandler.old_device,
             "old_uuid": MockStorageHandler.old_uuid,
             "uuid": MockStorageHandler.uuid,
-            "formating": MockStorageHandler.formating,
+            "formating": MockStorageHandler.formatting,
         }
 
     @logger_wrapper(logger)
     def get_drives(self):
-        raise NotImplementedError()
+        return {"drives": MockStorageHandler.drives}
 
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):

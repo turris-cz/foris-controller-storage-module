@@ -66,77 +66,60 @@ class SettingsUci(BaseCmdLine, BaseFile):
 
         return True
 
-class DriveManager(object):
+
+class DriveManager(BaseCmdLine, BaseFile):
     def get_drives(self):
-        proc = subprocess.Popen(['sh', '-c', 'busybox', 'grep', '-l', '1', '/sys/class/block/*/removable'], stdout=subprocess.PIPE)
-        stdout_value = proc.communicate()[0]
         ret = []
-        blk_rex = re.compile('^(mmcblk.*|mtd.*)$')
-        uuid_rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".*')
-        label_rex = re.compile('^/dev/([^:]*):.* LABEL="([^"]*)".*')
-        type_rex = re.compile('^/dev/([^:]*):.* TYPE="([^"]*)".*')
-        for dev in os.listdir('/sys/class/block'):
-            grp = blk_rex.match(dev)
-            if not grp:
-                proc = subprocess.Popen(['blkid', "/dev/{}".format(dev)], stdout=subprocess.PIPE)
-                blkid = proc.communicate()[0].strip()
-                grp = uuid_rex.match(blkid)
-                uuid = ''
-                if grp:
-                    uuid = grp.group(2)
-                grp = type_rex.match(blkid)
-                fs = ''
-                if grp:
-                    fs = grp.group(2)
-                grp = label_rex.match(blkid)
-                tmp = ''
-                if grp:
-                    description = grp.group(2)
-                else:
-                    description = ''
-                tmp = ''
-                try:
-                    fl = open("/sys/class/block/{}/device/vendor".format(dev), 'r')
-                except:
-                    fl = False
-                if fl:
-                    tmp = fl.read().strip()
-                if tmp:
-                    if description:
-                        description = '{} - {}'.format(description, tmp)
-                    else:
-                        description = tmp
-                tmp = ''
-                try:
-                    fl = open("/sys/class/block/{}/device/model".format(dev), 'r')
-                except:
-                    fl = False
-                if fl:
-                    tmp = fl.read().strip()
-                if tmp:
-                    if description:
-                        description = '{} {}'.format(description, tmp)
-                    else:
-                        description = tmp
-                tmp = ''
-                try:
-                    fl = open("/sys/class/block/{}/size".format(dev), 'r')
-                except:
-                    fl = False
-                if fl:
-                    tmp = fl.read().strip()
-                if tmp:
-                    size = int(tmp) / (2 * 1024 * 1024)
-                    if(size > 1000):
-                        tmp = '{} {}'.format(size / 1000, size % 1000)
-                    else:
-                        tmp = str(size)
-                    if description:
-                        description = '{} ({} GiB)'.format(description, tmp)
-                    else:
-                        description = 'Size {} GiB'.format(tmp)
-                ret = ret + [ { "dev": dev, "description": description, "fs": fs, "uuid": uuid } ]
-        return { "drives": ret }
+        drive_dir = '/sys/class/block'
+
+        for dev in os.listdir(inject_file_root(drive_dir)):
+            # skip some device
+            if dev.startswith("mmcblk") or dev.startswith("mtd"):
+                continue
+
+            # removable only
+            try:
+                self._read_and_parse(os.path.join(drive_dir, dev, "removable"), "^1$", (0, ))
+            except (IOError, FailedToParseFileContent):
+                continue
+
+            retval, stdout, stderr = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
+            if retval != 0:
+                # not found using blkid
+                continue
+            # parse blockid output
+            # remove "/dev/...:"
+            parsed = stdout[stdout.index(":") + 1:].strip()
+            # -> ['TYPE="brtfs"', ...]
+            parsed = [e for e in parsed.split(" ") if e]
+            # -> {"TYPE": "btrfs", ...}
+
+            parsed = dict([(x.strip('"') for x in e.split("=")) for e in parsed if "=" in e])
+            uuid = parsed.get("UUID", "")
+            fs = parsed.get("TYPE", "")
+
+            # prepare description data
+            label = parsed.get("LABEL", "")
+            try:
+                vendor = self._file_content("/sys/class/block/%s/device/vendor" % dev).strip()
+            except IOError:
+                vendor = ""
+            try:
+                model = self._file_content("/sys/class/block/%s/device/model" % dev).strip()
+            except IOError:
+                model = ""
+            size = int(self._file_content("/sys/class/block/%s/size" % dev).strip())
+            size = size / float(2 * (1024 ** 2))
+            size = "{0:,.1f}".format(size).replace(',', ' ') if size > 0.0 else "0"
+
+            # build description
+            description = " - ".join([e for e in [label, vendor] if e])
+            description = " ".join([e for e in [description, model] if e])
+            description = "%s (%s GiB)" % (description, size) if description \
+                else "Size %s GiB" % size
+
+            ret.append({"dev": dev, "description": description, "fs": fs, "uuid": uuid})
+        return {"drives": ret}
 
     def prepare_srv_drive(self, srv):
         subprocess.Popen(["/usr/libexec/format_and_set_srv.sh", "/dev/{}".format(srv['drive'])])

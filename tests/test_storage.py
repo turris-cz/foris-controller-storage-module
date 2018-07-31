@@ -136,3 +136,15 @@ def test_get_settings(
 
         if infrastructure.backend_name != "mock":
             assert res["data"]["formating"] is formatting_file
+
+
+def test_get_drives(
+    file_root_init, uci_configs_init, infrastructure, ubusd_test, blkid_sda_ok_cmd
+):
+    res = infrastructure.process_message({
+        "module": "storage",
+        "action": "get_drives",
+        "kind": "request",
+    })
+    assert "data" in res
+    assert "drives" in res["data"]
