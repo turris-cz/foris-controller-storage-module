@@ -107,6 +107,19 @@ def formatting_file(request):
         yield request.param
 
 
+@pytest.fixture(scope="function")
+def prepare_srv_drive_sh_cmd(request):
+    content = """\
+        #!/bin/sh
+        exit 0
+    """
+    with FileFaker(
+        cmdline_script_root(), "/usr/libexec/format_and_set_srv.sh", True,
+        textwrap.dedent(content)
+    ) as f:
+        yield f
+
+
 def test_get_settings(
     file_root_init, uci_configs_init, infrastructure, ubusd_test, stat_cmd, mounts_file,
     blkid_sda_ok_cmd, formatting_file
@@ -148,3 +161,15 @@ def test_get_drives(
     })
     assert "data" in res
     assert "drives" in res["data"]
+
+
+def test_prepare_srv_drive(
+    file_root_init, uci_configs_init, infrastructure, ubusd_test, prepare_srv_drive_sh_cmd
+):
+    res = infrastructure.process_message({
+        "module": "storage",
+        "action": "prepare_srv_drive",
+        "kind": "request",
+        "data": {"drive": "sda"},
+    })
+    assert "errors" not in res

@@ -57,7 +57,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
-        raise NotImplementedError()
+        return {}
 
     @logger_wrapper(logger)
     def update_settings(self, srv):

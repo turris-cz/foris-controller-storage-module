@@ -122,5 +122,8 @@ class DriveManager(BaseCmdLine, BaseFile):
         return {"drives": ret}
 
     def prepare_srv_drive(self, srv):
-        subprocess.Popen(["/usr/libexec/format_and_set_srv.sh", "/dev/{}".format(srv['drive'])])
+        self._run_command_and_check_retval(
+            ["/usr/libexec/format_and_set_srv.sh", "/dev/%s" % srv['drive']],
+            0
+        )
         return {  }
