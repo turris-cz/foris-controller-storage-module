@@ -16,3 +16,123 @@
 # along with this program; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301  USA
 #
+
+import pytest
+import textwrap
+
+from .conftest import cmdline_script_root, file_root
+
+from foris_controller_testtools.fixtures import (
+    infrastructure, ubusd_test, uci_configs_init, file_root_init, FILE_ROOT_PATH
+)
+
+from foris_controller_testtools.utils import FileFaker
+
+
+@pytest.fixture(params=["/", "/srv"], ids=["srv_not_mounted", "srv_mounted"], scope="function")
+def stat_cmd(request):
+    content = """\
+        #!/bin/sh
+        echo %s
+    """ % request.param
+    with FileFaker(cmdline_script_root(), "/usr/bin/stat", True, textwrap.dedent(content)) as f:
+        yield f, request.param
+
+
+MOUNTS = {
+    "mounts1": """\
+/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
+proc /proc proc rw,noatime 0 0
+sysfs /sys sysfs rw,noatime 0 0
+none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
+tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
+devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
+debugfs /sys/kernel/debug debugfs rw,noatime 0 0
+mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
+""",
+    "mounts2": """\
+/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
+proc /proc proc rw,noatime 0 0
+sysfs /sys sysfs rw,noatime 0 0
+none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
+tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
+devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
+debugfs /sys/kernel/debug debugfs rw,noatime 0 0
+mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
+/dev/sda /srv btrfs rw,relatime,space_cache,subvolid=5,subvol=/ 0 0
+""",
+    "mounts3": """\
+/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
+proc /proc proc rw,noatime 0 0
+sysfs /sys sysfs rw,noatime 0 0
+none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
+tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
+devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
+debugfs /sys/kernel/debug debugfs rw,noatime 0 0
+mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
+/dev/sdb /srv btrfs rw,relatime,space_cache,subvolid=5,subvol=/ 0 0
+""",
+}
+
+
+@pytest.fixture(scope="function")
+def blkid_sda_ok_cmd(request):
+    content = """\
+        #!/bin/sh
+        if [ "$1" != "/dev/sda" ] ; then
+            exit 1
+        else
+            echo '/dev/sda: LABEL="srv" UUID="fb002a7a-7504-4f08-882b-09eebb2b26e6" UUID_SUB="20ce89eb-6720-4d40-8b48-c114153b1202" TYPE="btrfs"'
+        fi
+    """
+    with FileFaker(cmdline_script_root(), "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:
+        yield f
+
+
+@pytest.fixture(params=MOUNTS.keys(), scope="function")
+def mounts_file(request):
+    with FileFaker(FILE_ROOT_PATH, "/proc/mounts", False, MOUNTS[request.param]) as f:
+        yield f, request.param
+
+
+@pytest.fixture(params=[True, False], ids=["formatting_yes", "formatting_no"], scope="function")
+def formatting_file(request):
+    if request.param:
+        with FileFaker(FILE_ROOT_PATH, "/tmp/formating", False, ""):
+            yield request.param
+    else:
+        yield request.param
+
+
+def test_get_settings(
+    file_root_init, uci_configs_init, infrastructure, ubusd_test, stat_cmd, mounts_file,
+    blkid_sda_ok_cmd, formatting_file
+):
+    _, srv_mount = stat_cmd
+    _, mounts_file_id = mounts_file
+    res = infrastructure.process_message({
+        "module": "storage",
+        "action": "get_settings",
+        "kind": "request",
+    })
+
+    if infrastructure.backend_name != "mock" and srv_mount == "/srv":
+        if mounts_file_id == "mounts1":
+            assert "data" not in res
+            assert "errors" in res
+            assert "Can't find device" in res["errors"][0]["description"]
+        elif mounts_file_id == "mounts3":
+            assert "data" not in res
+            assert "errors" in res
+            assert "Can't get UUID" in res["errors"][0]["description"]
+
+    else:
+        assert set(res["data"].keys()) == {
+            u"old_device", u"old_uuid", u"uuid", "formating",
+        }
+
+        if infrastructure.backend_name != "mock":
+            assert res["data"]["formating"] is formatting_file

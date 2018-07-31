@@ -9,6 +9,7 @@ from .. import Handler
 
 logger = logging.getLogger(__name__)
 
+
 class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
 
     settings = SettingsUci()

@@ -4,46 +4,59 @@ import re
 import os
 
 from foris_controller_backends.uci import UciBackend, get_option_named
+from foris_controller_backends.cmdline import BaseCmdLine
+from foris_controller_backends.files import BaseFile, inject_file_root
+from foris_controller.exceptions import (
+    FailedToParseFileContent, FailedToParseCommandOutput, BackendCommandFailed
+)
 
 logger = logging.getLogger(__name__)
 
 
-class SettingsUci(object):
+class SettingsUci(BaseCmdLine, BaseFile):
     def get_srv(self):
 
         with UciBackend() as backend:
-            try:
-                data = backend.read("storage")
-                uuid = get_option_named(data, "storage", "srv", "uuid")
-            except:
-                uuid = ""
-        old_device = ""
-        proc = subprocess.Popen(['stat', '-c', '%m', '/srv'], stdout=subprocess.PIPE)
-        mnt = proc.communicate()[0].strip()
-        rex = re.compile('^(/dev/[^ ]*|ubi[^ ]*) {} .*'.format(mnt))
-        with open('/proc/mounts', 'r') as f:
-            for ln in f:
-                grp = rex.match(ln)
-                if grp:
-                    old_device = grp.group(1)
-                    break
-        if(old_device == ""):
-            raise LookupError("Can't find device that mounts as '{}' and thus can't decide what provides /srv!".format(mnt))
-        if mnt == "/":
+            data = backend.read("storage")
+
+        uuid = get_option_named(data, "storage", "srv", "uuid", "")
+        # get mountpoint of /srv
+        srv_mount_point = self._trigger_and_parse(
+            ['/usr/bin/stat', '-c', '%m', '/srv'], r"\s*(.*)\s*"
+        )
+
+        try:
+            old_device = self._read_and_parse(
+                "/proc/mounts",
+                r'^(/dev/[^ ]*|ubi[^ ]*) {} .*'.format(srv_mount_point)
+            )
+        except FailedToParseFileContent:
+            raise LookupError(
+                "Can't find device that mounts as '{}' and thus can't decide what provides /srv!"
+                .format(srv_mount_point)
+            )
+
+        if srv_mount_point == "/":
             old_uuid = "rootfs"
         else:
-            proc = subprocess.Popen(['blkid', old_device], stdout=subprocess.PIPE)
-            blkid = proc.communicate()[0].strip()
-            rex = re.compile('^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*')
-            grp = rex.match(blkid)
-            if grp:
-                old_uuid = grp.group(2)
-            else:
-                raise LookupError("Can't get UUID for device '{}' from '{}'!".format(old_device, blkid))
-        return { 'uuid': uuid,
-                 'old_uuid': old_uuid,
-                 'old_device': old_device,
-                 'formating': os.path.isfile('/tmp/formating') }
+            # use blkid to obtain old uuid
+            try:
+                blkid, old_uuid = self._trigger_and_parse(
+                    ['/usr/sbin/blkid', old_device],
+                    r'^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*',
+                    (0, 2),
+                )
+            except (BackendCommandFailed, FailedToParseCommandOutput) as exc:
+                raise LookupError(
+                    "Can't get UUID for device '{}' from '{}'!".format(old_device, exc.message)
+                )
+
+        return {
+            'uuid': uuid,
+            'old_uuid': old_uuid,
+            'old_device': old_device,
+            'formating': os.path.isfile(inject_file_root('/tmp/formating'))
+        }
 
     def update_srv(self, srv):
 

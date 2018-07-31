@@ -1,4 +1,13 @@
 {
+    "definitions": {
+        "uuid": {"type": "string", "minLength": 5, "maxLength": 40},
+        "uuid_or_empty": {
+            "oneOf": [
+                {"$ref": "#/definitions/uuid"},
+                {"type": "string", "maxLength": 0}
+            ]
+        }
+    },
     "oneOf": [
         {
             "description": "Get settings request",
@@ -18,8 +27,8 @@
                 "data": {
                     "type": "object",
                     "properties": {
-                        "uuid": {"type": "string", "minimum": 5, "maximum": 40},
-                        "old_uuid": {"type": "string", "minimum": 5, "maximum": 40},
+                        "uuid": {"$ref": "#/definitions/uuid_or_empty"},
+                        "old_uuid": {"$ref": "#/definitions/uuid"},
                         "old_device": {"type": "string"},
                         "formating": {"type": "boolean"}
                     },
