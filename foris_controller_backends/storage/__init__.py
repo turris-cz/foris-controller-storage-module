@@ -40,15 +40,22 @@ class SettingsUci(BaseCmdLine, BaseFile):
             old_uuid = "rootfs"
         else:
             # use blkid to obtain old uuid
+            cmd = ['/usr/sbin/blkid', old_device]
             try:
                 blkid, old_uuid = self._trigger_and_parse(
-                    ['/usr/sbin/blkid', old_device],
+                    cmd,
                     r'^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*',
                     (0, 2),
                 )
-            except (BackendCommandFailed, FailedToParseCommandOutput) as exc:
+            except (FailedToParseCommandOutput) as exc:
                 raise LookupError(
                     "Can't get UUID for device '{}' from '{}'!".format(old_device, exc.message)
+                )
+            except (BackendCommandFailed) as exc:
+                raise LookupError(
+                    "Can't get UUID for device '{}'. Command '{}' has failed! ({})".format(
+                        old_device, " ".join(cmd), exc
+                    )
                 )
 
         return {
@@ -83,12 +90,13 @@ class DriveManager(BaseCmdLine, BaseFile):
             except (IOError, FailedToParseFileContent):
                 continue
 
-            retval, stdout, stderr = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
+            retval, stdout, _ = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
             if retval != 0:
                 # not found using blkid
                 continue
             # parse blockid output
             # remove "/dev/...:"
+            stdout = stdout.decode("utf-8")
             parsed = stdout[stdout.index(":") + 1:].strip()
             # -> ['TYPE="brtfs"', ...]
             parsed = [e for e in parsed.split(" ") if e]
@@ -126,4 +134,4 @@ class DriveManager(BaseCmdLine, BaseFile):
             ["/usr/libexec/format_and_set_srv.sh", "/dev/%s" % srv['drive']],
             0
         )
-        return {  }
+        return {}
