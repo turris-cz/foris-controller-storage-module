@@ -86,7 +86,7 @@ class DriveManager(BaseCmdLine, BaseFile):
 
             # removable only
             try:
-                self._read_and_parse(os.path.join(drive_dir, dev, "removable"), "^1$", (0, ))
+                self._read_and_parse(os.path.join(drive_dir, dev.rstrip('1234567890'), "removable"), "^1$", (0, ))
             except (IOError, FailedToParseFileContent):
                 continue
 
