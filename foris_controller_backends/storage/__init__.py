@@ -81,13 +81,7 @@ class DriveManager(BaseCmdLine, BaseFile):
 
         for dev in os.listdir(inject_file_root(drive_dir)):
             # skip some device
-            if dev.startswith("mmcblk") or dev.startswith("mtd"):
-                continue
-
-            # removable only
-            try:
-                self._read_and_parse(os.path.join(drive_dir, dev.rstrip('1234567890'), "removable"), "^1$", (0, ))
-            except (IOError, FailedToParseFileContent):
+            if not dev.startswith("sd"):
                 continue
 
             retval, stdout, _ = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
