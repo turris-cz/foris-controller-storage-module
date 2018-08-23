@@ -79,12 +79,10 @@ start() {
 		rainbow all auto white
 
 		# Cleanup everything
-		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-                	umount -fl /tmp/old-srv
-		else
-                	umount -fl /tmp/old-srv/srv
-		fi
-                rm -rf /tmp/old-srv
+                umount -fl /tmp/old-srv/srv 2> /dev/null || :
+                umount -fl /tmp/old-srv 2> /dev/null || :
+                rmdir /tmp/old-srv/srv 2> /dev/null || :
+                rmdir /tmp/old-srv 2> /dev/null || :
 		uci set storage.srv.old_uuid=""
 		uci commit storage.srv.old_uuid
 		if [ -n "$link_tgt" ]; then
