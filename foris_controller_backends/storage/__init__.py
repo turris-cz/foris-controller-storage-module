@@ -85,23 +85,26 @@ class DriveManager(BaseCmdLine, BaseFile):
                 continue
 
             retval, stdout, _ = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
-            if retval != 0:
-                # not found using blkid
-                continue
-            # parse blockid output
-            # remove "/dev/...:"
-            stdout = stdout.decode("utf-8")
-            parsed = stdout[stdout.index(":") + 1:].strip()
-            # -> ['TYPE="brtfs"', ...]
-            parsed = [e for e in parsed.split(" ") if e]
-            # -> {"TYPE": "btrfs", ...}
+            if retval == 0:
+                # found using blkid
+                # parse blockid output
+                # remove "/dev/...:"
+                stdout = stdout.decode("utf-8")
+                parsed = stdout[stdout.index(":") + 1:].strip()
+                # -> ['TYPE="brtfs"', ...]
+                parsed = [e for e in parsed.split(" ") if e]
+                # -> {"TYPE": "btrfs", ...}
 
-            parsed = dict([(x.strip('"') for x in e.split("=")) for e in parsed if "=" in e])
-            uuid = parsed.get("UUID", "")
-            fs = parsed.get("TYPE", "")
+                parsed = dict([(x.strip('"') for x in e.split("=")) for e in parsed if "=" in e])
+                uuid = parsed.get("UUID", "")
+                fs = parsed.get("TYPE", "")
 
-            # prepare description data
-            label = parsed.get("LABEL", "")
+                # prepare description data
+                label = parsed.get("LABEL", "")
+            else:
+                fs = ""
+                uuid = ""
+                label = ""
             try:
                 vendor = self._file_content("/sys/class/block/%s/device/vendor" % dev).strip()
             except IOError:
