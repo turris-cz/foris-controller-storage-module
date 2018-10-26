@@ -9,6 +9,7 @@ status() {
 
 die() {
 	create_notification -n error "$1"
+	grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts || mount -t tmpfs -o size=50M none /srv
 	exit 1
 }
 
