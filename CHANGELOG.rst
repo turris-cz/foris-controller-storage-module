@@ -1,3 +1,8 @@
+0.2.3 (2018-10-26)
+------------------
+
+* make sure we don't use flash when mounting fails
+
 0.2.2 (2018-09-20)
 ------------------
 
