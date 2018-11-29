@@ -20,7 +20,7 @@
 import pytest
 import textwrap
 
-from .conftest import cmdline_script_root, file_root
+from .conftest import file_root, CMDLINE_SCRIPT_ROOT
 
 from foris_controller_testtools.fixtures import (
     infrastructure, ubusd_test, uci_configs_init, file_root_init, FILE_ROOT_PATH
@@ -35,7 +35,7 @@ def stat_cmd(request):
         #!/bin/sh
         echo %s
     """ % request.param
-    with FileFaker(cmdline_script_root(), "/usr/bin/stat", True, textwrap.dedent(content)) as f:
+    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/bin/stat", True, textwrap.dedent(content)) as f:
         yield f, request.param
 
 
@@ -88,7 +88,7 @@ def blkid_sda_ok_cmd(request):
             echo '/dev/sda: LABEL="srv" UUID="fb002a7a-7504-4f08-882b-09eebb2b26e6" UUID_SUB="20ce89eb-6720-4d40-8b48-c114153b1202" TYPE="btrfs"'
         fi
     """
-    with FileFaker(cmdline_script_root(), "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:
+    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:
         yield f
 
 
@@ -114,7 +114,7 @@ def prepare_srv_drive_sh_cmd(request):
         exit 0
     """
     with FileFaker(
-        cmdline_script_root(), "/usr/libexec/format_and_set_srv.sh", True,
+        CMDLINE_SCRIPT_ROOT, "/usr/libexec/format_and_set_srv.sh", True,
         textwrap.dedent(content)
     ) as f:
         yield f

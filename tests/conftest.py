@@ -26,6 +26,8 @@ from foris_controller_testtools.fixtures import (
     controller_modules, extra_module_paths, message_bus, backend
 )
 
+CMDLINE_SCRIPT_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_root")
+
 
 @pytest.fixture(scope="session")
 def ubusd_acl_path():
@@ -46,9 +48,7 @@ def uci_config_default_path():
 
 @pytest.fixture(scope="session")
 def cmdline_script_root():
-    return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), "test_root"
-    )
+    return CMDLINE_SCRIPT_ROOT
 
 
 @pytest.fixture(scope="module")
