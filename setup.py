@@ -26,7 +26,7 @@ Storrage module for foris-controller
 """
 
 setup(
-    name='foris-controller-pakon-module',
+    name='foris-controller-storage-module',
     version=__version__,
     author='CZ.NIC, z.s.p.o. (http://www.nic.cz/)',
     author_email='stepan.henek@nic.cz',
