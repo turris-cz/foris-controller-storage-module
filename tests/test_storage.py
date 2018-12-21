@@ -23,7 +23,8 @@ import textwrap
 from .conftest import file_root, CMDLINE_SCRIPT_ROOT
 
 from foris_controller_testtools.fixtures import (
-    infrastructure, ubusd_test, uci_configs_init, file_root_init, FILE_ROOT_PATH
+    infrastructure, ubusd_test, uci_configs_init, file_root_init, FILE_ROOT_PATH,
+    start_buses, mosquitto_test
 )
 
 from foris_controller_testtools.utils import FileFaker
@@ -121,7 +122,7 @@ def prepare_srv_drive_sh_cmd(request):
 
 
 def test_get_settings(
-    file_root_init, uci_configs_init, infrastructure, ubusd_test, stat_cmd, mounts_file,
+    file_root_init, uci_configs_init, infrastructure, start_buses, stat_cmd, mounts_file,
     blkid_sda_ok_cmd, formatting_file
 ):
     _, srv_mount = stat_cmd
@@ -152,7 +153,7 @@ def test_get_settings(
 
 
 def test_get_drives(
-    file_root_init, uci_configs_init, infrastructure, ubusd_test, blkid_sda_ok_cmd
+    file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd
 ):
     res = infrastructure.process_message({
         "module": "storage",
@@ -164,7 +165,7 @@ def test_get_drives(
 
 
 def test_prepare_srv_drive(
-    file_root_init, uci_configs_init, infrastructure, ubusd_test, prepare_srv_drive_sh_cmd
+    file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
 ):
     res = infrastructure.process_message({
         "module": "storage",
