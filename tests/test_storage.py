@@ -87,6 +87,7 @@ def blkid_sda_ok_cmd(request):
             exit 1
         else
             echo '/dev/sda: LABEL="srv" UUID="fb002a7a-7504-4f08-882b-09eebb2b26e6" UUID_SUB="20ce89eb-6720-4d40-8b48-c114153b1202" TYPE="btrfs"'
+            echo '/dev/sdb: LABEL="s\\"=:v" UUID="fb002a7a-7504-4f08-882b-eeeeeeeeeeee" UUID_SUB="20ce89eb-6720-4d40-8b48-eeeeeeeeeeee" TYPE="btrfs"'
         fi
     """
     with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:

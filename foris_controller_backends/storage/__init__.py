@@ -2,6 +2,7 @@ import logging
 import subprocess
 import re
 import os
+import shlex
 
 from foris_controller_backends.uci import UciBackend, get_option_named
 from foris_controller_backends.cmdline import BaseCmdLine
@@ -90,12 +91,14 @@ class DriveManager(BaseCmdLine, BaseFile):
                 # parse blockid output
                 # remove "/dev/...:"
                 stdout = stdout.decode("utf-8")
-                parsed = stdout[stdout.index(":") + 1:].strip()
-                # -> ['TYPE="brtfs"', ...]
-                parsed = [e for e in parsed.split(" ") if e]
-                # -> {"TYPE": "btrfs", ...}
+                _, variables = stdout.split(":", 1)
 
-                parsed = dict([(x.strip('"') for x in e.split("=")) for e in parsed if "=" in e])
+                # -> ['TYPE=brtfs', ...]
+                parsed = shlex.split(variables)
+
+                # -> {"TYPE": "btrfs", ...}
+                parsed = dict([e.split("=", 1) for e in parsed if "=" in e])
+
                 uuid = parsed.get("UUID", "")
                 fs = parsed.get("TYPE", "")
 
