@@ -63,7 +63,10 @@ class SettingsUci(BaseCmdLine, BaseFile):
             'uuid': uuid,
             'old_uuid': old_uuid,
             'old_device': old_device,
-            'formating': os.path.isfile(inject_file_root('/tmp/formating'))
+            'formating': os.path.isfile(inject_file_root('/tmp/formating')),
+            'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
+            'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
+            'nextcloud_configured': os.path.isfile(inject_file_root('/srv/www/nextcloud/config/config.php'))
         }
 
     def update_srv(self, srv):
@@ -74,6 +77,13 @@ class SettingsUci(BaseCmdLine, BaseFile):
 
         return True
 
+class SoftwareManager(BaseCmdLine, BaseFile):
+    def configure_nextcloud(self, creds):
+        data = self._run_command_and_check_retval(
+            ["/usr/bin/nextcloud_install", "--batch", creds['credentials']['login'], creds['credentials']['password']],
+            0
+        )
+        return { 'result': data }
 
 class DriveManager(BaseCmdLine, BaseFile):
     def get_drives(self):

@@ -3,7 +3,7 @@ import logging
 from foris_controller.handler_base import BaseOpenwrtHandler
 from foris_controller.utils import logger_wrapper
 
-from foris_controller_backends.storage import SettingsUci, DriveManager
+from foris_controller_backends.storage import SettingsUci, DriveManager, SoftwareManager
 
 from .. import Handler
 
@@ -14,6 +14,7 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
 
     settings = SettingsUci()
     drives = DriveManager()
+    software = SoftwareManager()
 
     @logger_wrapper(logger)
     def get_settings(self):
@@ -30,3 +31,7 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def update_settings(self, srv):
         return self.settings.update_srv(srv)
+
+    @logger_wrapper(logger)
+    def configure_nextcloud(self, credentials):
+        return self.software.configure_nextcloud(credentials)

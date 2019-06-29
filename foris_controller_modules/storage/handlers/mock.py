@@ -60,5 +60,9 @@ class MockStorageHandler(Handler, BaseMockHandler):
         return {}
 
     @logger_wrapper(logger)
+    def configure_nextcloud(self, srv):
+        return {}
+
+    @logger_wrapper(logger)
     def update_settings(self, srv):
         raise NotImplementedError()
