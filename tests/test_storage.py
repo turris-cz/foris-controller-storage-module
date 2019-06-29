@@ -146,7 +146,7 @@ def test_get_settings(
 
     else:
         assert set(res["data"].keys()) == {
-            u"old_device", u"old_uuid", u"uuid", "formating",
+            u"old_device", u"old_uuid", u"uuid", "formating", "nextcloud_configuring", "nextcloud_configured", "nextcloud_installed"
         }
 
         if infrastructure.backend_name != "mock":
