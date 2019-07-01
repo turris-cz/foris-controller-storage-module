@@ -43,7 +43,7 @@ start() {
 		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
 		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features"
 	else
-		mount -t btrfs -o subvol=@,nodatacow,noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
+		mount -t btrfs -o subvol=@,noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
 	fi
 
 	# Find root device
