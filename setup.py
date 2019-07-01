@@ -22,7 +22,7 @@ from setuptools import setup
 from foris_controller_storage_module import __version__
 
 DESCRIPTION = """
-Storrage module for foris-controller
+Storage module for foris-controller
 """
 
 setup(

@@ -1,6 +1,6 @@
 #!/bin/sh /etc/rc.common
 
-START=40
+START=35
 STOP=90
 
 status() {
