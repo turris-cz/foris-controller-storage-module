@@ -20,6 +20,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         with UciBackend() as backend:
             data = backend.read("storage")
 
+        old_uuid = ""
         uuid = get_option_named(data, "storage", "srv", "uuid", "")
         # get mountpoint of /srv
         srv_mount_point = self._trigger_and_parse(
@@ -32,14 +33,12 @@ class SettingsUci(BaseCmdLine, BaseFile):
                 r'^(/dev/[^ ]*|ubi[^ ]*) {} .*'.format(srv_mount_point)
             )
         except FailedToParseFileContent:
-            raise LookupError(
-                "Can't find device that mounts as '{}' and thus can't decide what provides /srv!"
-                .format(srv_mount_point)
-            )
+            old_device = "none"
+            old_uuid = "broken"
 
         if srv_mount_point == "/":
             old_uuid = "rootfs"
-        else:
+        elif old_uuid == "":
             # use blkid to obtain old uuid
             cmd = ['/usr/sbin/blkid', old_device]
             try:
