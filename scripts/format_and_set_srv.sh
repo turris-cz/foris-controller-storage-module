@@ -66,7 +66,7 @@ SRV="$(stat -c %m /srv/)"
 SRV_DEV=""
 SRV_UUID=""
 if [ -n "$(cat /proc/mounts | grep '^ubi[^[:blank:]]* '"$SRV"' .*')" ] || \
-   [ -n "$(cat /proc/mounts | grep '^tmpfs /srv .*')" ]; then
+   [ -n "$(cat /proc/mounts | grep '^[^[:blank:]]* /srv tmpfs.*')" ]; then
     SRV_UUID="rootfs"
 else
     [ -z "$SRV" ] || SRV_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p')"
