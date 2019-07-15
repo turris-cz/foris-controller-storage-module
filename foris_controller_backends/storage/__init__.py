@@ -24,7 +24,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         uuid = get_option_named(data, "storage", "srv", "uuid", "")
         # get mountpoint of /srv
         srv_mount_point = self._trigger_and_parse(
-            ['/usr/bin/stat', '-c', '%m', '/srv'], r"\s*(.*)\s*"
+            ['stat', '-c', '%m', '/srv'], r"\s*(.*)\s*"
         )
 
         try:
@@ -40,7 +40,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
             old_uuid = "rootfs"
         elif old_uuid == "":
             # use blkid to obtain old uuid
-            cmd = ['/usr/sbin/blkid', old_device]
+            cmd = ['blkid', old_device]
             try:
                 blkid, old_uuid = self._trigger_and_parse(
                     cmd,
@@ -79,7 +79,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
 class SoftwareManager(BaseCmdLine, BaseFile):
     def configure_nextcloud(self, creds):
         data = self._run_command_and_check_retval(
-            ["/usr/bin/nextcloud_install", "--batch", creds['credentials']['login'], creds['credentials']['password']],
+            ["nextcloud_install", "--batch", creds['credentials']['login'], creds['credentials']['password']],
             0
         )
         return { 'result': data }
@@ -94,7 +94,7 @@ class DriveManager(BaseCmdLine, BaseFile):
             if not dev.startswith("sd"):
                 continue
 
-            retval, stdout, _ = self._run_command('/usr/sbin/blkid', "/dev/%s" % dev)
+            retval, stdout, _ = self._run_command('blkid', "/dev/%s" % dev)
             if retval == 0:
                 # found using blkid
                 # parse blockid output
