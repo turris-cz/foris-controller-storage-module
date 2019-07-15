@@ -33,6 +33,10 @@ class MockStorageHandler(Handler, BaseMockHandler):
     uuid = ""
     formatting = False
 
+    nextcloud_installed = False
+    nextcloud_configured = False
+    nextcloud_configuring = False
+
     drives = [
         {
             "fs": "btrfs",
@@ -49,6 +53,9 @@ class MockStorageHandler(Handler, BaseMockHandler):
             "old_uuid": MockStorageHandler.old_uuid,
             "uuid": MockStorageHandler.uuid,
             "formating": MockStorageHandler.formatting,
+            "nextcloud_installed": MockStorageHandler.nextcloud_installed,
+            "nextcloud_configured": MockStorageHandler.nextcloud_configured,
+            "nextcloud_configuring": MockStorageHandler.nextcloud_configuring,
         }
 
     @logger_wrapper(logger)

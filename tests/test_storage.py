@@ -108,6 +108,20 @@ def formatting_file(request):
     else:
         yield request.param
 
+@pytest.fixture(scope="function")
+def nextcloud_installed_file(request):
+    with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/index.php", False, "") as f:
+        yield f, request.param
+
+@pytest.fixture(scope="function")
+def nextcloud_configuring_file(request):
+    with FileFaker(FILE_ROOT_PATH, "/tmp/nextcloud_configuring", False, "") as f:
+        yield f, request.param
+
+@pytest.fixture(scope="function")
+def nextcloud_configured_file(request):
+    with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/config/config.php", False, "") as f:
+        yield f, request.param
 
 @pytest.fixture(scope="function")
 def prepare_srv_drive_sh_cmd(request):
@@ -134,19 +148,20 @@ def test_get_settings(
         "kind": "request",
     })
 
-    if infrastructure.backend_name != "mock" and srv_mount == "/srv":
-        if mounts_file_id == "mounts1":
-            assert "data" not in res
-            assert "errors" in res
-            assert "Can't find device" in res["errors"][0]["description"]
-        elif mounts_file_id == "mounts3":
-            assert "data" not in res
-            assert "errors" in res
-            assert "Can't get UUID" in res["errors"][0]["description"]
+    if infrastructure.backend_name != "mock" and srv_mount == "/srv" and mounts_file_id == "mounts3":
+        assert "data" not in res
+        assert "errors" in res
+        assert "Can't get UUID" in res["errors"][0]["description"]
 
     else:
         assert set(res["data"].keys()) == {
-            u"old_device", u"old_uuid", u"uuid", "formating", "nextcloud_configuring", "nextcloud_configured", "nextcloud_installed"
+            u"old_device",
+            u"old_uuid",
+            u"uuid",
+            u"formating",
+            u"nextcloud_configuring",
+            u"nextcloud_configured",
+            u"nextcloud_installed"
         }
 
         if infrastructure.backend_name != "mock":
