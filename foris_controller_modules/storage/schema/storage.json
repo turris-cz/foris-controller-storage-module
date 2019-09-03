@@ -31,12 +31,13 @@
                         "old_uuid": {"$ref": "#/definitions/uuid"},
                         "old_device": {"type": "string"},
                         "formating": {"type": "boolean"},
+                        "state": {"type": "string"},
                         "nextcloud_installed": {"type": "boolean"},
                         "nextcloud_configured": {"type": "boolean"},
                         "nextcloud_configuring": {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["uuid", "old_uuid", "old_device", "formating" ]
+                    "required": ["nextcloud_installed", "formating" ]
                 }
             },
             "additionalProperties": false,
@@ -89,10 +90,15 @@
                 "data": {
                     "type": "object",
                     "properties": {
-                        "drive": {"type": "string"}
+                        "drives": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            }
+                        }
                     },
                     "additionalProperties": false,
-                    "required": ["drive"]
+                    "required": ["drives"]
                 }
             },
             "additionalProperties": false,

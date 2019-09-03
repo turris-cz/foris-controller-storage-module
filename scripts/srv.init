@@ -18,14 +18,14 @@ start() {
         [ -n "$UUID" ] || exit 0
 	OLD_UUID="$(uci -q get storage.srv.old_uuid)"
 	DEV=""
-	DEBUG="$(uci -q get storage.srv.debug | egrep '(1|yes|on)')"	
+	DEBUG="$(uci -q get storage.srv.debug | egrep '(1|yes|on)')"
 	[ -z "$DEBUG" ] || set -x
 	[ -z "$DEBUG" ] || exec 2>> /tmp/storage_debug
 	i=0
 
 	# Try to find a drive
 	while [ $i -lt 10 ] && [ -z "$DEV" ]; do
-		DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p')"
+		DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p' | head -n 1)"
 		sleep 1
 		i="$(expr $i + 1)"
 	done
@@ -58,14 +58,14 @@ start() {
 		fi
 	fi
 
-	# If needed, mount old root device
+	# If needed, mount old root device and migrate data
         if [ -n "$OLD_DEV" ] || [ -n "$link_tgt" ]; then
 		mkdir -p /tmp/old-srv
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-			mount -o bind / /tmp/old-srv
+			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs"
 		elif [ -n "$link_tgt" ]; then
 			mkdir -p /tmp/old-srv/srv
-			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv
+			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg" 
 		else
 			mkdir -p /tmp/old-srv/srv
 			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV"
