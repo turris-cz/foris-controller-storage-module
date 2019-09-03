@@ -62,7 +62,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         state = ""
         if os.path.isfile(inject_file_root('/tmp/storage_plugin/state')):
             with open(inject_file_root("/tmp/storage_plugin/state")) as fl:
-                state = fl.readline().strip
+                state = fl.readline().strip()
 
         return {
             'uuid': uuid,

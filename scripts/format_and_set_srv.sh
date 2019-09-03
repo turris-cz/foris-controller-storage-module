@@ -6,8 +6,6 @@ config_get_bool DBG srv debug 0
 config_get UUID srv uuid
 config_get RAID srv raid single
 
-mkdir -p /tmp/storage_plugin
-
 FROM_SCRATCH=""
 SRV_MNT_PNT="/srv"
 # Decide how much we want to debug
@@ -22,7 +20,7 @@ else
 fi
 
 cleanup() {
-    umount -fl /tmp/storage_plugin_formating
+    umount -fl /tmp/storage_plugin/tmpdir 2> /dev/null
     rm -rf /tmp/storage_plugin
 }
 
@@ -41,13 +39,14 @@ set_state() {
     echo "$1" > /tmp/storage_plugin/state
 }
 
-# Unmount everything we might need
+# Try to unmount everything that might be mounted
+# This is best effort, so ignore all errors not to confuse people and to ease debugging
 umount_drive() {
-   umount -fl "$1"
+   umount -fl "$1" 2> /dev/null
    # If argument is whole drive unmount partitions as well
    if expr "$1" : '.*[a-z]$' > /dev/null; then
        for part in "$1"[0-9]; do
-           umount -fl "$part"
+           umount -fl "$part" 2> /dev/null
        done
    fi
 }
@@ -65,14 +64,14 @@ format_drive() {
    umount_drive "$disk"
 
    set_state "Fromating the drive"
-   RES="$(mkfs.btrfs -f -L srv "$disk" 2>&1)"
-   [ "$?" = 0 ] || die "Formatting drive failed, try unpluging it and repluging it in again." "$RES"
+   RES="$(mkfs.btrfs -f -L srv "$disk" 2>&1)" ||\
+       die "Formatting drive failed, try unpluging it and repluging it in again." "$RES"
 
    reload_partitions "$disk"
 
    # Try to get UUID
-   UUID="$(echo "$RES" | sed -n 's|Filesystem UUID: \([0-9a-f-]*\)|\1|p')"
-   [ -n "$UUID" ] || UUID="$(blkid "$disk" -s UUID -o value)"
+   UUID="$(echo "$RES" | sed -n 's|.*UUID:[[:blank:]]*\([0-9a-f-]*\)|\1|p')"
+   [ -n "$UUID" ] || UUID="$(blkid -c /dev/null "$disk" -s UUID -o value)"
    [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
 
    # Prepare snapshot on the drive
@@ -85,7 +84,7 @@ format_drive() {
 
 # Does the disk have srv UUID
 has_uuid() {
-   [ "$(blkid "$1" -s UUID -o value)" = "$UUID" ]
+   [ "$(blkid -c /dev/null "$1" -s UUID -o value)" = "$UUID" ]
 }
 
 # Check syntax
@@ -95,6 +94,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 # Some locking and also storing desired drives
+mkdir /tmp/storage_plugin 2>/dev/null || die "Another instance is already running."
 if [ -f /tmp/storage_plugin/formating ]; then
     die "Another formatting job currently in progress, not switching to new drive."
 fi
@@ -107,7 +107,7 @@ trap cleanup EXIT TERM
 # Run in background by default not to block Foris
 if [ -z "$FORKED" ]; then
     export FORKED=1
-    "$0" "$@" &
+    "$0" "$@" < /dev/null > /dev/null 2>&1 &
     exit 0
 else
     sleep 1
@@ -131,7 +131,7 @@ if [ -z "$UUID" ]; then
        SRV_UUID="rootfs"
    else
        [ -z "$SRV" ] || SRV_DEV="$(sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p' /proc/mounts)"
-       [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid "$SRV_DEV" -s UUID -o value)"
+       [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid -c /dev/null "$SRV_DEV" -s UUID -o value)"
    fi
    [ -n "$SRV_UUID" ] || die "Can't find your current srv location"
    uci set storage.srv.uuid="$UUID"
@@ -143,7 +143,7 @@ fi
 if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ]; then
    SRV_MNT_PNT="/tmp/storage_plugin/tmpdir"
    mkdir -p "$SRV_MNT_PNT"
-   DEV="$(blkid -U "$UUID")"
+   DEV="$(blkid -c /dev/null -U "$UUID")"
    [ -n "$DEV" ] || die "Can't find device with UUID $UUID"
    mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV"
 fi
@@ -154,8 +154,8 @@ for disk in "$@"; do
    if ! has_uuid "$disk"; then
       umount_drive "$disk"
       set_state "Adding drive $disk to the storage"
-      RES="$(btrfs device add "$disk" "$SRV_MNT_PNT" 2>&1)"
-      [ "$?" = 0 ] || die "Adding drive $disk failed." "$RES"
+      RES="$(btrfs device add "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
+          die "Adding drive $disk failed." "$RES"
       CHANGED="yes"
    fi
 done
@@ -164,8 +164,8 @@ done
 for disk in $(btrfs device usage "$SRV_MNT_PNT" | sed -n 's|^\(/dev/[^,]*\),.*|\1|p'); do
    if ! grep -q "^$disk" /tmp/storage_plugin/formating; then
       set_state "Removing drive $disk from the storage"
-      RES="$(btrfs device delete "$disk" "$SRV_MNT_PNT" 2>&1)"
-      [ "$?" = 0 ] || die "Removing drive $disk failed." "$RES"
+      RES="$(btrfs device delete "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
+          die "Removing drive $disk failed." "$RES"
       CHANGED="yes"
    fi
 done
@@ -175,24 +175,24 @@ if [ "$RAID" = single ]; then
    # Check is some data/metadata are still in RAID configuration
    if btrfs device usage "$SRV_MNT_PNT" | grep -q RAID; then
       set_state "Converting to JBOD configuration"
-      RES="$(btrfs balance start -dconvert=single -mconvert=dup "$SRV_MNT_PNT" 2>&1)"
-      [ "$?" = 0 ] || die "Converting raid profile failed." "$RES"
+      RES="$(btrfs balance start -dconvert=single -mconvert=dup "$SRV_MNT_PNT" 2>&1)" ||\
+          die "Converting raid profile failed." "$RES"
       CHANGED=""
    fi
 elif [ "$RAID" = raid1 ]; then
    # Check is some data/metadata are still not in RAID configuration
    if btrfs device usage "$SRV_MNT_PNT" | grep -q -E '(Data,single|Metadata,DUP)'; then
       set_state "Converting to RAID1 configuration"
-      RES="$(btrfs balance start -dconvert=raid1 -mconvert=raid1 "$SRV_MNT_PNT" 2>&1)"
-      [ "$?" = 0 ] || die "Converting raid profile failed." "$RES"
+      RES="$(btrfs balance start -dconvert=raid1 -mconvert=raid1 "$SRV_MNT_PNT" 2>&1)"||\
+          die "Converting raid profile failed." "$RES"
       CHANGED=""
    fi
 fi
 if [ -n "$CHANGED" ]; then
    # If some drives were added/removed, do rebalance to redistribute the data
    set_state "Redistributing data across devices"
-   RES="$(btrfs balance start --full-balance "$SRV_MNT_PNT" 2>&1)"
-   [ "$?" = 0 ] || die "Redistributing data failed." "$RES"
+   RES="$(btrfs balance start --full-balance "$SRV_MNT_PNT" 2>&1)" ||\
+       die "Redistributing data failed." "$RES"
 fi
 
 # Unmount temporally mounted srv if there is a such
