@@ -38,6 +38,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
 
         if srv_mount_point == "/":
             old_uuid = "rootfs"
+        # Read devices only if needed and only if there is no disk operation in progress
         elif old_uuid == "" and not os.path.isfile(inject_file_root('/tmp/formating')):
             # use blkid to obtain old uuid
             cmd = ['blkid', old_device]
@@ -59,18 +60,16 @@ class SettingsUci(BaseCmdLine, BaseFile):
                 )
 
         state = ""
-        try:
+        if os.path.isfile(inject_file_root('/tmp/storage_state')):
             with open(inject_file_root("/tmp/storage_state")) as fl:
-                state += fl.readline()
-        except FileNotFoundError:
-            state = ""
+                state = fl.readline().strip
 
         return {
             'uuid': uuid,
             'old_uuid': old_uuid,
             'old_device': old_device,
             'formating': os.path.isfile(inject_file_root('/tmp/formating')),
-            'state': state.strip(),
+            'state': state,
             'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
             'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
             'nextcloud_configured': os.path.isfile(inject_file_root('/srv/www/nextcloud/config/config.php'))
