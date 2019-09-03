@@ -39,7 +39,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         if srv_mount_point == "/":
             old_uuid = "rootfs"
         # Read devices only if needed and only if there is no disk operation in progress
-        elif old_uuid == "" and not os.path.isfile(inject_file_root('/tmp/formating')):
+        elif old_uuid == "" and not os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')):
             # use blkid to obtain old uuid
             cmd = ['blkid', old_device]
             try:
@@ -60,15 +60,15 @@ class SettingsUci(BaseCmdLine, BaseFile):
                 )
 
         state = ""
-        if os.path.isfile(inject_file_root('/tmp/storage_state')):
-            with open(inject_file_root("/tmp/storage_state")) as fl:
+        if os.path.isfile(inject_file_root('/tmp/storage_plugin/state')):
+            with open(inject_file_root("/tmp/storage_plugin/state")) as fl:
                 state = fl.readline().strip
 
         return {
             'uuid': uuid,
             'old_uuid': old_uuid,
             'old_device': old_device,
-            'formating': os.path.isfile(inject_file_root('/tmp/formating')),
+            'formating': os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')),
             'state': state,
             'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
             'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
@@ -95,7 +95,7 @@ class DriveManager(BaseCmdLine, BaseFile):
     def get_drives(self):
         ret = []
         # Would block during formating
-        if os.path.isfile(inject_file_root('/tmp/formating')):
+        if os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')):
             return {"drives": ret}
 
         drive_dir = '/sys/class/block'

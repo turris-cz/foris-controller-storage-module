@@ -6,9 +6,10 @@ config_get_bool DBG srv debug 0
 config_get UUID srv uuid
 config_get RAID srv raid single
 
+mkdir -p /tmp/storage_plugin
+
 FROM_SCRATCH=""
 SRV_MNT_PNT="/srv"
-
 # Decide how much we want to debug
 [ "$DBG" = 0 ] || set -x
 if [ "x-d" = "x$1" ]; then
@@ -22,11 +23,8 @@ fi
 
 cleanup() {
     umount -fl /tmp/storage_plugin_formating
-    rm -f /tmp/storage_state
-    rm -f /tmp/formating
+    rm -rf /tmp/storage_plugin
 }
-
-trap cleanup EXIT TERM
 
 die() {
     if [ -n "$2" ]; then
@@ -40,7 +38,7 @@ _(Technical details:) $2"
 }
 
 set_state() {
-    echo "$1" > /tmp/storage_state
+    echo "$1" > /tmp/storage_plugin/state
 }
 
 # Unmount everything we might need
@@ -78,11 +76,11 @@ format_drive() {
    [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
 
    # Prepare snapshot on the drive
-   mkdir -p /tmp/storage_plugin_formating
-   mount -t btrfs "$disk" /tmp/storage_plugin_formating || die "Can't mount newly formatted drive."
-   btrfs subvol create /tmp/storage_plugin_formating/@ || die "Can't create @ submodule."
-   umount /tmp/storage_plugin_formating
-   rmdir /tmp/storage_plugin_formating
+   mkdir -p /tmp/storage_plugin/tmpdir
+   mount -t btrfs "$disk" /tmp/storage_plugin/tmpdir || die "Can't mount newly formatted drive."
+   btrfs subvol create /tmp/storage_plugin/tmpdir/@ || die "Can't create @ submodule."
+   umount /tmp/storage_plugin/tmpdir
+   rmdir /tmp/storage_plugin/tmpdir
 }
 
 # Does the disk have srv UUID
@@ -97,11 +95,14 @@ if [ "$#" -lt 1 ]; then
 fi
 
 # Some locking and also storing desired drives
-if [ -f /tmp/formating ]; then
+if [ -f /tmp/storage_plugin/formating ]; then
     die "Another formatting job currently in progress, not switching to new drive."
 fi
 # Make sure drives are stored with absolute paths
-echo "$@" | sed 's| |\n|g' | sed 's|^\([^/]\)|/dev/\1|' > /tmp/formating
+echo "$@" | sed 's| |\n|g' | sed 's|^\([^/]\)|/dev/\1|' > /tmp/storage_plugin/formating
+
+# Cleanup only if we are the right instance
+trap cleanup EXIT TERM
 
 # Run in background by default not to block Foris
 if [ -z "$FORKED" ]; then
@@ -113,7 +114,7 @@ else
 fi
 
 # Reset arguments to make sure we have absolute paths to drives
-set $(cat /tmp/formating)
+set $(cat /tmp/storage_plugin/formating)
 
 # Are we are starting from scratch
 if [ -z "$UUID" ]; then
@@ -140,7 +141,7 @@ fi
 
 # Make sure we have /srv mounted somewhere
 if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ]; then
-   SRV_MNT_PNT="/tmp/storage_plugin_formating"
+   SRV_MNT_PNT="/tmp/storage_plugin/tmpdir"
    mkdir -p "$SRV_MNT_PNT"
    DEV="$(blkid -U "$UUID")"
    [ -n "$DEV" ] || die "Can't find device with UUID $UUID"
@@ -161,7 +162,7 @@ done
 
 # Remove no longer wanted drives
 for disk in $(btrfs device usage "$SRV_MNT_PNT" | sed -n 's|^\(/dev/[^,]*\),.*|\1|p'); do
-   if ! grep -q "^$disk" /tmp/formating; then
+   if ! grep -q "^$disk" /tmp/storage_plugin/formating; then
       set_state "Removing drive $disk from the storage"
       RES="$(btrfs device delete "$disk" "$SRV_MNT_PNT" 2>&1)"
       [ "$?" = 0 ] || die "Removing drive $disk failed." "$RES"
