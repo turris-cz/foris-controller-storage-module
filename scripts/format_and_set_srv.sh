@@ -53,7 +53,7 @@ _(Technical details:)_($RES"
 
    # Try to get UUID
    UUID="$(echo "$RES" | sed -n 's|Filesystem UUID: \([0-9a-f-]*\)|\1|p')"
-   [ -n "$UUID" ] || UUID="$(blkid "$1" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
+   [ -n "$UUID" ] || UUID="$(blkid "$1" -s UUID -o value)"
    [ -n "$UUID" ] || die "Can't get UUID of your newly formatted drive."
 
    # Prepare snapshot on the drive
@@ -66,7 +66,7 @@ _(Technical details:)_($RES"
 
 # Does the disk have srv UUID
 has_uuid() {
-   blkid "$1" | grep -q "UUID=\"$UUID\""
+   [ "$(blkid "$1" -s UUID -o value)" = "$UUID" ]
    return $?
 }
 
@@ -119,7 +119,7 @@ if [ -z "$UUID" ]; then
        SRV_UUID="rootfs"
    else
        [ -z "$SRV" ] || SRV_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p')"
-       [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid "$SRV_DEV" | sed -n 's|.* UUID="\([0-9a-f-]*\)" .*|\1|p')"
+       [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid "$SRV_DEV" -s UUID -o value)"
    fi
    [ -n "$SRV_UUID" ] || die "Can't find your current srv location"
    uci set storage.srv.uuid="$UUID"
@@ -131,7 +131,7 @@ fi
 if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ]; then
    SRV_MNT_PNT="/tmp/storage_plugin_formating"
    mkdir -p "$SRV_MNT_PNT"
-   DEV="$(blkid | sed -n 's|^\(/dev[^:]*\):.* UUID="'"$UUID"'".*|\1|p' | head -n 1)"
+   DEV="$(blkid -U "$UUID")"
    [ -n "$DEV" ] || die "Can't find device with UUID $UUID"
    mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV"
 fi
