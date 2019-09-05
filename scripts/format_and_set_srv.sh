@@ -160,6 +160,17 @@ for disk in "$@"; do
    fi
 done
 
+# Convert if needed - might be required to be able to delete drive
+if [ "$RAID" = single ]; then
+   # Check is some data/metadata are still in RAID configuration
+   if btrfs device usage "$SRV_MNT_PNT" | grep -q RAID; then
+      set_state "Converting to JBOD configuration"
+      RES="$(btrfs balance start -dconvert=single -mconvert=dup "$SRV_MNT_PNT" 2>&1)" ||\
+          die "Converting raid profile failed." "$RES"
+      CHANGED=""
+   fi
+fi
+
 # Remove no longer wanted drives
 for disk in $(btrfs device usage "$SRV_MNT_PNT" | sed -n 's|^\(/dev/[^,]*\),.*|\1|p'); do
    if ! grep -q "^$disk" /tmp/storage_plugin/formating; then
@@ -170,16 +181,8 @@ for disk in $(btrfs device usage "$SRV_MNT_PNT" | sed -n 's|^\(/dev/[^,]*\),.*|\
    fi
 done
 
-# Rebalance/convert if needed
-if [ "$RAID" = single ]; then
-   # Check is some data/metadata are still in RAID configuration
-   if btrfs device usage "$SRV_MNT_PNT" | grep -q RAID; then
-      set_state "Converting to JBOD configuration"
-      RES="$(btrfs balance start -dconvert=single -mconvert=dup "$SRV_MNT_PNT" 2>&1)" ||\
-          die "Converting raid profile failed." "$RES"
-      CHANGED=""
-   fi
-elif [ "$RAID" = raid1 ]; then
+# Convert/balance if needed
+if [ "$RAID" = raid1 ]; then
    # Check is some data/metadata are still not in RAID configuration
    if btrfs device usage "$SRV_MNT_PNT" | grep -q -E '(Data,single|Metadata,DUP)'; then
       set_state "Converting to RAID1 configuration"
