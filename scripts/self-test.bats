@@ -57,7 +57,6 @@ get_df() {
 	echo "RAID=raid1" >> /lib/functions.sh
 	format_and_set_srv.sh -d /dev/loop0 /dev/loop1
 	run get_df /dev/loop0
-	echo "Got free space of $output"
 	[ "$status" -eq 0 ]
 	[ "$output" -lt 1500 ]
 	[ "$output" -gt 500 ]
@@ -77,4 +76,13 @@ get_df() {
 	format_and_set_srv.sh -d /dev/loop0 /dev/loop1
 	[ "$(cat /tmp/storage-test-mount/testfile)" = "$TEST_PATTERN" ]
 	umount /tmp/storage-test-mount
+}
+
+@test "Degrading to one drive fails in RAID1, works in single" {
+	echo "RAID=raid1" >> /lib/functions.sh
+	format_and_set_srv.sh -d /dev/loop0 /dev/loop1
+	run format_and_set_srv.sh -d /dev/loop0
+	[ "$status" -ne 0 ]
+	echo "RAID=single" >> /lib/functions.sh
+	format_and_set_srv.sh -d /dev/loop0
 }
