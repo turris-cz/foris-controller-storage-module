@@ -103,7 +103,7 @@ def mounts_file(request):
 @pytest.fixture(params=[True, False], ids=["formatting_yes", "formatting_no"], scope="function")
 def formatting_file(request):
     if request.param:
-        with FileFaker(FILE_ROOT_PATH, "/tmp/formating", False, ""):
+        with FileFaker(FILE_ROOT_PATH, "/tmp/storage_plugin/formating", False, ""):
             yield request.param
     else:
         yield request.param
@@ -148,24 +148,13 @@ def test_get_settings(
         "kind": "request",
     })
 
-    if infrastructure.backend_name != "mock" and srv_mount == "/srv" and mounts_file_id == "mounts3":
-        assert "data" not in res
-        assert "errors" in res
-        assert "Can't get UUID" in res["errors"][0]["description"]
+    assert set(res["data"].keys()) >= {
+        u"formating",
+        u"nextcloud_installed"
+    }
 
-    else:
-        assert set(res["data"].keys()) == {
-            u"old_device",
-            u"old_uuid",
-            u"uuid",
-            u"formating",
-            u"nextcloud_configuring",
-            u"nextcloud_configured",
-            u"nextcloud_installed"
-        }
-
-        if infrastructure.backend_name != "mock":
-            assert res["data"]["formating"] is formatting_file
+    if infrastructure.backend_name != "mock":
+        assert res["data"]["formating"] is formatting_file
 
 
 def test_get_drives(
@@ -187,6 +176,6 @@ def test_prepare_srv_drive(
         "module": "storage",
         "action": "prepare_srv_drive",
         "kind": "request",
-        "data": {"drive": "sda"},
+        "data": {"drives": ["sda"]},
     })
     assert "errors" not in res
