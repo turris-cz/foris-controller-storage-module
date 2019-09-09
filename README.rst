@@ -12,3 +12,10 @@ Installation
 ============
 
 	``python3 setup.py install``
+
+Testing
+=======
+
+There is `sripts/self-test.bats` test for
+[bats](https://github.com/sstephenson/bats) but it requires elevated
+privileges.
