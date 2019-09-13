@@ -4,7 +4,7 @@ config_load storage
 
 config_get_bool DBG srv debug 0
 config_get UUID srv uuid
-config_get RAID srv raid single
+config_get RAID srv raid custom
 
 FROM_SCRATCH=""
 SRV_MNT_PNT="/srv"
