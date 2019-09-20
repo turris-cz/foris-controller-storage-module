@@ -15,13 +15,14 @@ logger = logging.getLogger(__name__)
 
 
 class SettingsUci(BaseCmdLine, BaseFile):
-    def get_srv(self):
+    def get_state(self):
 
         with UciBackend() as backend:
             data = backend.read("storage")
 
         old_uuid = ""
         uuid = get_option_named(data, "storage", "srv", "uuid", "")
+        raid = get_option_named(data, "storage", "srv", "raid", "custom")
         # get mountpoint of /srv
         srv_mount_point = self._trigger_and_parse(
             ['stat', '-c', '%m', '/srv'], r"\s*(.*)\s*"
@@ -67,9 +68,21 @@ class SettingsUci(BaseCmdLine, BaseFile):
         return {
             'uuid': uuid,
             'old_uuid': old_uuid,
-            'old_device': old_device,
-            'formating': os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')),
-            'state': state,
+            'old_device_desc': old_device,
+            'blocked': os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')),
+            'state_desc': state,
+            'raid': raid,
+        }
+
+    def get_srv(self):
+        state = self.get_state()
+
+        return {
+            'uuid': state['uuid'],
+            'old_uuid': state['old_uuid'],
+            'old_device': state['old_device_desc'],
+            'formating': state['blocked'],
+            'state': state['state_desc'],
             'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
             'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
             'nextcloud_configured': os.path.isfile(inject_file_root('/srv/www/nextcloud/config/config.php'))
@@ -79,9 +92,15 @@ class SettingsUci(BaseCmdLine, BaseFile):
 
         with UciBackend() as backend:
             backend.set_option("storage", "srv", "uuid", srv['uuid'])
-            backend.set_option("storage", "srv", "old_uuid", srv['old_uuid'])
 
-        return True
+        return {}
+
+    def update_raid(self, srv):
+
+        with UciBackend() as backend:
+            backend.set_option("storage", "srv", "raid", srv['raid'])
+
+        return {}
 
 class SoftwareManager(BaseCmdLine, BaseFile):
     def configure_nextcloud(self, creds):

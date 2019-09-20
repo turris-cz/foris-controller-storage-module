@@ -59,6 +59,23 @@ class MockStorageHandler(Handler, BaseMockHandler):
         }
 
     @logger_wrapper(logger)
+    def get_state(self):
+        return {
+            "old_device_desc": MockStorageHandler.old_device,
+            "old_uuid": MockStorageHandler.old_uuid,
+            "uuid": MockStorageHandler.uuid,
+            "blocked": MockStorageHandler.formatting,
+        }
+
+    @logger_wrapper(logger)
+    def update_srv(self, srv):
+        return {}
+
+    @logger_wrapper(logger)
+    def update_raid(self, srv):
+        return {}
+
+    @logger_wrapper(logger)
     def get_drives(self):
         return {"drives": MockStorageHandler.drives}
 

@@ -10,6 +10,15 @@ class StorageModule(BaseModule):
     def action_get_settings(self, data):
         return self.handler.get_settings()
 
+    def action_get_state(self, data):
+        return self.handler.get_state()
+
+    def action_update_srv(self, data):
+        return {"result": self.handler.update_srv(data)}
+
+    def action_update_raid(self, data):
+        return {"result": self.handler.update_raid(data)}
+
     def action_update_settings(self, data):
         return {"result": self.handler.update_settings(data)}
 
@@ -25,8 +34,11 @@ class StorageModule(BaseModule):
 
 @wrap_required_functions([
     'get_settings',
+    'get_state',
     'configure_nextcloud',
     'update_settings',
+    'update_srv',
+    'update_raid',
     'get_drives',
     'prepare_srv_drive',
 ])

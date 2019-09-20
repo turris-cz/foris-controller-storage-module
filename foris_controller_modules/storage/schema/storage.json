@@ -1,6 +1,7 @@
 {
     "definitions": {
         "uuid": {"type": "string", "minLength": 5, "maxLength": 40},
+        "raid": {"enum": ["custom", "single", "raid1"]},
         "uuid_or_empty": {
             "oneOf": [
                 {"$ref": "#/definitions/uuid"},
@@ -15,6 +16,15 @@
                 "module": {"enum": ["storage"]},
                 "kind": {"enum": ["request"]},
                 "action": {"enum": ["get_settings"]}
+            },
+            "additionalProperties": false
+        },
+        {
+            "description": "Get state request",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["get_state"]}
             },
             "additionalProperties": false
         },
@@ -38,6 +48,29 @@
                     },
                     "additionalProperties": false,
                     "required": ["nextcloud_installed", "formating" ]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Get state reply",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["get_state"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "uuid": {"$ref": "#/definitions/uuid_or_empty"},
+                        "old_uuid": {"$ref": "#/definitions/uuid"},
+                        "old_device_desc": {"type": "string"},
+                        "blocked": {"type": "boolean"},
+                        "state_desc": {"type": "string"},
+                        "raid": {"$ref": "#/definitions/raid"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["blocked", "uuid" ]
                 }
             },
             "additionalProperties": false,
@@ -105,11 +138,75 @@
             "required": ["data"]
         },
         {
-            "description": "Drive preparation reply",
+            "description": "Set UUID of drive to be used as srv",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["update_srv"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "uuid": {"$ref": "#/definitions/uuid_or_empty"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["uuid"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+       {
+            "description": "Set RAID level",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum": ["update_raid"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "raid": {"$ref": "#/definitions/raid"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["raid"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Empty replies",
             "properties": {
                 "module": {"enum": ["storage"]},
                 "kind": {"enum": ["reply"]},
                 "action": {"enum": ["prepare_srv_drive"]},
+                "data": {
+                    "type": "object",
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Empty replies",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["update_srv"]},
+                "data": {
+                    "type": "object",
+                    "additionalProperties": false
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Empty replies",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["update_raid"]},
                 "data": {
                     "type": "object",
                     "additionalProperties": false

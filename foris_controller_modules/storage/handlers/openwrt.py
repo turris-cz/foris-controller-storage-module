@@ -21,8 +21,20 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
         return self.settings.get_srv()
 
     @logger_wrapper(logger)
+    def get_state(self):
+        return self.settings.get_state()
+
+    @logger_wrapper(logger)
     def get_drives(self):
         return self.drives.get_drives()
+
+    @logger_wrapper(logger)
+    def update_srv(self, srv):
+        return self.settings.update_srv(srv)
+
+    @logger_wrapper(logger)
+    def update_raid(self, srv):
+        return self.settings.update_raid(srv)
 
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):

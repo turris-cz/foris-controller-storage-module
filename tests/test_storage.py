@@ -156,6 +156,24 @@ def test_get_settings(
     if infrastructure.backend_name != "mock":
         assert res["data"]["formating"] is formatting_file
 
+def test_get_state(
+    file_root_init, uci_configs_init, infrastructure, start_buses, stat_cmd, mounts_file,
+    blkid_sda_ok_cmd, formatting_file
+):
+    _, srv_mount = stat_cmd
+    _, mounts_file_id = mounts_file
+    res = infrastructure.process_message({
+        "module": "storage",
+        "action": "get_state",
+        "kind": "request",
+    })
+
+    assert set(res["data"].keys()) >= {
+        u"blocked",
+    }
+
+    if infrastructure.backend_name != "mock":
+        assert res["data"]["blocked"] is formatting_file
 
 def test_get_drives(
     file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd
