@@ -40,18 +40,14 @@ start() {
 		mkdir -p /srv
 	fi
 
-	# Other subvolume?
-	config_get SUBVOL srv subvolume
-	if [ -z "${SUBVOL}" ]; then
-		SUBVOL='@'
-	fi
-
 	# Mount it
 	if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
 		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
 		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features"
 	else
-		mount -t btrfs -o subvol=${SUBVOL},noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
+		local subvol
+		config_get subvol srv subvolume '@'
+		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount $DEV as /srv"
 	fi
 
 	# Find root device
