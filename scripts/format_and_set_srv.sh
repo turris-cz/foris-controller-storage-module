@@ -154,7 +154,7 @@ for disk in "$@"; do
    if ! has_uuid "$disk"; then
       umount_drive "$disk"
       set_state "Adding drive $disk to the storage"
-      RES="$(btrfs device add "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
+      RES="$(btrfs device add -f "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
           die "Adding drive $disk failed." "$RES"
       CHANGED="yes"
    fi
