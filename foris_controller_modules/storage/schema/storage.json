@@ -128,7 +128,8 @@
                             "items": {
                                 "type": "string"
                             }
-                        }
+                        },
+                        "raid": {"$ref": "#/definitions/raid"}
                     },
                     "additionalProperties": false,
                     "required": ["drives"]
@@ -155,24 +156,6 @@
             "additionalProperties": false,
             "required": ["data"]
         },
-       {
-            "description": "Set RAID level",
-            "properties": {
-                "module": {"enum": ["storage"]},
-                "kind": {"enum": ["request"]},
-                "action": {"enum": ["update_raid"]},
-                "data": {
-                    "type": "object",
-                    "properties": {
-                        "raid": {"$ref": "#/definitions/raid"}
-                    },
-                    "additionalProperties": false,
-                    "required": ["raid"]
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data"]
-        },
         {
             "description": "Empty replies",
             "properties": {
@@ -181,7 +164,10 @@
                 "action": {"enum": ["prepare_srv_drive"]},
                 "data": {
                     "type": "object",
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "properties": {
+                        "result": {"type": "boolean"}
+                    }
                 }
             },
             "additionalProperties": false,
@@ -195,21 +181,10 @@
                 "action": {"enum": ["update_srv"]},
                 "data": {
                     "type": "object",
-                    "additionalProperties": false
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data"]
-        },
-        {
-            "description": "Empty replies",
-            "properties": {
-                "module": {"enum": ["storage"]},
-                "kind": {"enum": ["reply"]},
-                "action": {"enum": ["update_raid"]},
-                "data": {
-                    "type": "object",
-                    "additionalProperties": false
+                    "additionalProperties": false,
+                    "properties": {
+                        "result": {"type": "boolean"}
+                    }
                 }
             },
             "additionalProperties": false,

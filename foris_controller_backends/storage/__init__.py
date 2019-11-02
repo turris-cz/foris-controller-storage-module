@@ -93,14 +93,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         with UciBackend() as backend:
             backend.set_option("storage", "srv", "uuid", srv['uuid'])
 
-        return {}
-
-    def update_raid(self, srv):
-
-        with UciBackend() as backend:
-            backend.set_option("storage", "srv", "raid", srv['raid'])
-
-        return {}
+        return { "result": True }
 
 class SoftwareManager(BaseCmdLine, BaseFile):
     def configure_nextcloud(self, creds):
@@ -169,8 +162,11 @@ class DriveManager(BaseCmdLine, BaseFile):
         return {"drives": ret}
 
     def prepare_srv_drive(self, srv):
+        if srv.get("raid", False):
+            with UciBackend() as backend:
+                backend.set_option("storage", "srv", "raid", srv['raid'])
         self._run_command_and_check_retval(
             ["/usr/libexec/format_and_set_srv.sh"] + srv['drives'],
             0
         )
-        return {}
+        return { "result": True }
