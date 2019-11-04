@@ -16,9 +16,6 @@ class StorageModule(BaseModule):
     def action_update_srv(self, data):
         return self.handler.update_srv(data)
 
-    def action_update_settings(self, data):
-        return self.handler.update_settings(data)
-
     def action_get_drives(self, data):
         return self.handler.get_drives()
 
@@ -33,7 +30,6 @@ class StorageModule(BaseModule):
     'get_settings',
     'get_state',
     'configure_nextcloud',
-    'update_settings',
     'update_srv',
     'get_drives',
     'prepare_srv_drive',

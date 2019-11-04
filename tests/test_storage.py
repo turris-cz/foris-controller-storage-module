@@ -186,7 +186,6 @@ def test_get_drives(
     assert "data" in res
     assert "drives" in res["data"]
 
-
 def test_prepare_srv_drive(
     file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
 ):
@@ -197,3 +196,17 @@ def test_prepare_srv_drive(
         "data": {"drives": ["sda"]},
     })
     assert "errors" not in res
+
+def test_update_srv(
+    file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
+):
+    res = infrastructure.process_message({
+        "module": "storage",
+        "action": "update_srv",
+        "kind": "request",
+        "data": {"uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6"},
+    })
+    assert "data" in res
+    assert "result" in res["data"]
+    assert  res["data"]["result"]
+

@@ -69,11 +69,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def update_srv(self, srv):
-        return {}
-
-    @logger_wrapper(logger)
-    def update_raid(self, srv):
-        return {}
+        return {"result": True}
 
     @logger_wrapper(logger)
     def get_drives(self):
@@ -81,12 +77,8 @@ class MockStorageHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
-        return {}
+        return {"result": True}
 
     @logger_wrapper(logger)
     def configure_nextcloud(self, srv):
         return {}
-
-    @logger_wrapper(logger)
-    def update_settings(self, srv):
-        raise NotImplementedError()

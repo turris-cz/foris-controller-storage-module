@@ -33,16 +33,8 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
         return self.settings.update_srv(srv)
 
     @logger_wrapper(logger)
-    def update_raid(self, srv):
-        return self.settings.update_raid(srv)
-
-    @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
         return self.drives.prepare_srv_drive(srv)
-
-    @logger_wrapper(logger)
-    def update_settings(self, srv):
-        return self.settings.update_srv(srv)
 
     @logger_wrapper(logger)
     def configure_nextcloud(self, credentials):

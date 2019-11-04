@@ -91,9 +91,10 @@ class SettingsUci(BaseCmdLine, BaseFile):
     def update_srv(self, srv):
 
         with UciBackend() as backend:
-            backend.set_option("storage", "srv", "uuid", srv['uuid'])
-
-        return { "result": True }
+            if srv.get('uuid', False):
+                backend.set_option("storage", "srv", "uuid", srv.get('uuid', ""))
+            return { "result": True }
+        return { "result": False }
 
 class SoftwareManager(BaseCmdLine, BaseFile):
     def configure_nextcloud(self, creds):
