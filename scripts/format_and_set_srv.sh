@@ -25,6 +25,7 @@ cleanup() {
 }
 
 die() {
+    foris-notify-wrapper -m storage -a state "{\"current\":\"failed\"}"
     if [ -n "$2" ]; then
         create_notification -s error "_($1)
 
@@ -36,6 +37,7 @@ _(Technical details:) $2"
 }
 
 set_state() {
+    foris-notify-wrapper -m storage -a state "{\"current\":\"$1\"}"
     echo "$1" > /tmp/storage_plugin/state
 }
 
@@ -63,7 +65,7 @@ format_drive() {
    local disk="$1"
    umount_drive "$disk"
 
-   set_state "Fromating the drive"
+   set_state "formatting"
    RES="$(mkfs.btrfs -f -L srv "$disk" 2>&1)" ||\
        die "Formatting drive failed, try unpluging it and repluging it in again." "$RES"
 
@@ -153,7 +155,7 @@ CHANGED=""
 for disk in "$@"; do
    if ! has_uuid "$disk"; then
       umount_drive "$disk"
-      set_state "Adding drive $disk to the storage"
+      set_state "growing"
       RES="$(btrfs device add -f "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
           die "Adding drive $disk failed." "$RES"
       CHANGED="yes"
@@ -164,7 +166,7 @@ done
 if [ "$RAID" = single ]; then
    # Check is some data/metadata are still in RAID configuration
    if btrfs device usage "$SRV_MNT_PNT" | grep -q RAID; then
-      set_state "Converting to JBOD configuration"
+      set_state "balancing"
       RES="$(btrfs balance start -dconvert=single -mconvert=dup "$SRV_MNT_PNT" 2>&1)" ||\
           die "Converting raid profile failed." "$RES"
       CHANGED=""
@@ -174,7 +176,7 @@ fi
 # Remove no longer wanted drives
 for disk in $(btrfs device usage "$SRV_MNT_PNT" | sed -n 's|^\(/dev/[^,]*\),.*|\1|p'); do
    if ! grep -q "^$disk" /tmp/storage_plugin/formating; then
-      set_state "Removing drive $disk from the storage"
+      set_state "shrinking"
       RES="$(btrfs device delete "$disk" "$SRV_MNT_PNT" 2>&1)" ||\
           die "Removing drive $disk failed." "$RES"
       CHANGED="yes"
@@ -185,7 +187,7 @@ done
 if [ "$RAID" = raid1 ]; then
    # Check is some data/metadata are still not in RAID configuration
    if btrfs device usage "$SRV_MNT_PNT" | grep -q -E '(Data,single|Metadata,DUP)'; then
-      set_state "Converting to RAID1 configuration"
+      set_state "balancing"
       RES="$(btrfs balance start -dconvert=raid1 -mconvert=raid1 "$SRV_MNT_PNT" 2>&1)"||\
           die "Converting raid profile failed." "$RES"
       CHANGED=""
@@ -193,7 +195,7 @@ if [ "$RAID" = raid1 ]; then
 fi
 if [ -n "$CHANGED" ]; then
    # If some drives were added/removed, do rebalance to redistribute the data
-   set_state "Redistributing data across devices"
+   set_state "balancing"
    RES="$(btrfs balance start --full-balance "$SRV_MNT_PNT" 2>&1)" ||\
        die "Redistributing data failed." "$RES"
 fi
@@ -205,6 +207,7 @@ if [ -n "$FROM_SCRATCH" ]; then
    TEXT="Your new disk for storing data has been setup successfully. All you need to do now is to reboot your router for changes to take effect. Be aware that if you have some local data stored on your current storage, those will get moved during reboot, so your next reboot might take quite some time."
    create_notification -s restart "_($TEXT)"
 else
-   create_notification -s restart "_(Your storage setup was updated as requested. Checkout the current state in Storage tab in Foris web UI.)"
+   create_notification -s news "_(Your storage setup was updated as requested. Checkout the current state in Storage tab in Foris web UI.)"
 fi
+set_state "done"
 rm -f /tmp/formating

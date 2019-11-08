@@ -2,6 +2,7 @@
     "definitions": {
         "uuid": {"type": "string", "minLength": 5, "maxLength": 40},
         "raid": {"enum": ["custom", "single", "raid1"]},
+        "state": {"enum": ["none", "formatting", "growing", "shrinking", "balancing", "done", "failed"]},
         "uuid_or_empty": {
             "oneOf": [
                 {"$ref": "#/definitions/uuid"},
@@ -27,6 +28,24 @@
                 "action": {"enum": ["get_state"]}
             },
             "additionalProperties": false
+        },
+        {
+            "description": "Notify about state change",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["notification"]},
+                "action": {"enum": ["state"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "current": {"$ref": "#/definitions/state"}
+                    },
+                    "additionalProperties": false,
+                    "required": ["current"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
         },
         {
             "description": "Get settings reply",
@@ -66,7 +85,7 @@
                         "old_uuid": {"$ref": "#/definitions/uuid"},
                         "old_device_desc": {"type": "string"},
                         "blocked": {"type": "boolean"},
-                        "state_desc": {"type": "string"},
+                        "state": {"$ref": "#/definitions/state"},
                         "raid": {"$ref": "#/definitions/raid"}
                     },
                     "additionalProperties": false,

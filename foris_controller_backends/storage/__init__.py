@@ -60,7 +60,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
                     )
                 )
 
-        state = ""
+        state = "none"
         if os.path.isfile(inject_file_root('/tmp/storage_plugin/state')):
             with open(inject_file_root("/tmp/storage_plugin/state")) as fl:
                 state = fl.readline().strip()
@@ -70,7 +70,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
             'old_uuid': old_uuid,
             'old_device_desc': old_device,
             'blocked': os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')),
-            'state_desc': state,
+            'state': state,
             'raid': raid,
         }
 
@@ -82,7 +82,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
             'old_uuid': state['old_uuid'],
             'old_device': state['old_device_desc'],
             'formating': state['blocked'],
-            'state': state['state_desc'],
+            'state': state['state'],
             'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
             'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
             'nextcloud_configured': os.path.isfile(inject_file_root('/srv/www/nextcloud/config/config.php'))
