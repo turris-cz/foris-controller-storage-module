@@ -26,13 +26,15 @@ class StorageModule(BaseModule):
         return self.handler.configure_nextcloud(data)
 
 
-@wrap_required_functions([
-    'get_settings',
-    'get_state',
-    'configure_nextcloud',
-    'update_srv',
-    'get_drives',
-    'prepare_srv_drive',
-])
+@wrap_required_functions(
+    [
+        "get_settings",
+        "get_state",
+        "configure_nextcloud",
+        "update_srv",
+        "get_drives",
+        "prepare_srv_drive",
+    ]
+)
 class Handler(object):
     pass

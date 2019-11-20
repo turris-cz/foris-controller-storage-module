@@ -158,6 +158,24 @@
             "required": ["data"]
         },
         {
+            "description": "Response to prepare drive as srv",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum": ["prepare_srv_drive"]},
+                "data": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "result": {"type": "boolean"}
+                    },
+                    "required": ["result"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
             "description": "Set UUID of drive to be used as srv",
             "properties": {
                 "module": {"enum": ["storage"]},
@@ -176,24 +194,7 @@
             "required": ["data"]
         },
         {
-            "description": "Empty replies",
-            "properties": {
-                "module": {"enum": ["storage"]},
-                "kind": {"enum": ["reply"]},
-                "action": {"enum": ["prepare_srv_drive"]},
-                "data": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "result": {"type": "boolean"}
-                    }
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data"]
-        },
-        {
-            "description": "Empty replies",
+            "description": "Response to set UUID of drive which will be used as srv",
             "properties": {
                 "module": {"enum": ["storage"]},
                 "kind": {"enum": ["reply"]},
@@ -203,7 +204,8 @@
                     "additionalProperties": false,
                     "properties": {
                         "result": {"type": "boolean"}
-                    }
+                    },
+                    "required": ["result"]
                 }
             },
             "additionalProperties": false,

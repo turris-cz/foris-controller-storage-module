@@ -1,14 +1,17 @@
 import logging
-import subprocess
-import re
 import os
+import re
 import shlex
+import subprocess
 
 from foris_controller_backends.uci import UciBackend, get_option_named
 from foris_controller_backends.cmdline import BaseCmdLine
-from foris_controller_backends.files import BaseFile, inject_file_root
+from foris_controller_backends.files import BaseFile, inject_file_root, path_exists
 from foris_controller.exceptions import (
-    FailedToParseFileContent, FailedToParseCommandOutput, BackendCommandFailed
+    FailedToParseFileContent,
+    FailedToParseCommandOutput,
+    BackendCommandFailed,
+    UciException,
 )
 
 logger = logging.getLogger(__name__)
@@ -24,14 +27,11 @@ class SettingsUci(BaseCmdLine, BaseFile):
         uuid = get_option_named(data, "storage", "srv", "uuid", "")
         raid = get_option_named(data, "storage", "srv", "raid", "custom")
         # get mountpoint of /srv
-        srv_mount_point = self._trigger_and_parse(
-            ['stat', '-c', '%m', '/srv'], r"\s*(.*)\s*"
-        )
+        srv_mount_point = self._trigger_and_parse(["stat", "-c", "%m", "/srv"], r"\s*(.*)\s*")
 
         try:
             old_device = self._read_and_parse(
-                "/proc/mounts",
-                r'^(/dev/[^ ]*|ubi[^ ]*) {} .*'.format(srv_mount_point)
+                "/proc/mounts", r"^(/dev/[^ ]*|ubi[^ ]*) {} .*".format(srv_mount_point)
             )
         except FailedToParseFileContent:
             old_device = "none"
@@ -40,14 +40,14 @@ class SettingsUci(BaseCmdLine, BaseFile):
         if srv_mount_point == "/":
             old_uuid = "rootfs"
         # Read devices only if needed and only if there is no disk operation in progress
-        elif old_uuid == "" and not os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')):
+        elif old_uuid == "" and not os.path.isfile(
+            inject_file_root("/tmp/storage_plugin/formating")
+        ):
             # use blkid to obtain old uuid
-            cmd = ['blkid', old_device]
+            cmd = ["blkid", old_device]
             try:
                 blkid, old_uuid = self._trigger_and_parse(
-                    cmd,
-                    r'^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*',
-                    (0, 2),
+                    cmd, r'^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*', (0, 2)
                 )
             except (FailedToParseCommandOutput) as exc:
                 raise LookupError(
@@ -61,64 +61,88 @@ class SettingsUci(BaseCmdLine, BaseFile):
                 )
 
         state = "none"
-        if os.path.isfile(inject_file_root('/tmp/storage_plugin/state')):
+        if os.path.isfile(inject_file_root("/tmp/storage_plugin/state")):
             with open(inject_file_root("/tmp/storage_plugin/state")) as fl:
                 state = fl.readline().strip()
 
         return {
-            'uuid': uuid,
-            'old_uuid': old_uuid,
-            'old_device_desc': old_device,
-            'blocked': os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')),
-            'state': state,
-            'raid': raid,
+            "uuid": uuid,
+            "old_uuid": old_uuid,
+            "old_device_desc": old_device,
+            "blocked": os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")),
+            "state": state,
+            "raid": raid,
         }
 
     def get_srv(self):
         state = self.get_state()
 
         return {
-            'uuid': state['uuid'],
-            'old_uuid': state['old_uuid'],
-            'old_device': state['old_device_desc'],
-            'formating': state['blocked'],
-            'state': state['state'],
-            'nextcloud_installed': os.path.isfile(inject_file_root('/srv/www/nextcloud/index.php')),
-            'nextcloud_configuring': os.path.isfile(inject_file_root('/tmp/nextcloud_configuring')),
-            'nextcloud_configured': os.path.isfile(inject_file_root('/srv/www/nextcloud/config/config.php'))
+            "uuid": state["uuid"],
+            "old_uuid": state["old_uuid"],
+            "old_device": state["old_device_desc"],
+            "formating": state["blocked"],
+            "state": state["state"],
+            "nextcloud_installed": os.path.isfile(inject_file_root("/srv/www/nextcloud/index.php")),
+            "nextcloud_configuring": os.path.isfile(inject_file_root("/tmp/nextcloud_configuring")),
+            "nextcloud_configured": os.path.isfile(
+                inject_file_root("/srv/www/nextcloud/config/config.php")
+            ),
         }
 
     def update_srv(self, srv):
 
-        with UciBackend() as backend:
-            if srv.get('uuid', False):
-                backend.set_option("storage", "srv", "uuid", srv.get('uuid', ""))
-            return { "result": True }
-        return { "result": False }
+        res = True
+        try:
+            with UciBackend() as backend:
+                if srv.get("uuid", False):
+                    backend.add_section("storage", "srv", "srv")
+                    backend.set_option("storage", "srv", "uuid", srv.get("uuid", ""))
+        except UciException:
+            res = False
+        return {"result": res}
+
 
 class SoftwareManager(BaseCmdLine, BaseFile):
     def configure_nextcloud(self, creds):
         data = self._run_command_and_check_retval(
-            ["nextcloud_install", "--batch", creds['credentials']['login'], creds['credentials']['password']],
-            0
+            [
+                "nextcloud_install",
+                "--batch",
+                creds["credentials"]["login"],
+                creds["credentials"]["password"],
+            ],
+            0,
         )
-        return { 'result': data }
+        return {"result": data}
+
 
 class DriveManager(BaseCmdLine, BaseFile):
+    def _find_blkid_bin(self) -> str:
+        """ finds fullpath to blkid binary """
+        for dirpath in [e for e in os.environ.get("PATH", "").split(":") if e.startswith("/")] + [
+            "/usr/sbin"
+        ]:
+            path = os.path.join(dirpath, "blkid")
+            if path_exists(path):
+                return path
+
+        return "/usr/sbin/blkid"  # default path
+
     def get_drives(self):
         ret = []
         # Would block during formating
-        if os.path.isfile(inject_file_root('/tmp/storage_plugin/formating')):
+        if os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")):
             return {"drives": ret}
 
-        drive_dir = '/sys/class/block'
+        drive_dir = "/sys/class/block"
 
         for dev in os.listdir(inject_file_root(drive_dir)):
             # skip some device
             if not dev.startswith("sd"):
                 continue
 
-            retval, stdout, _ = self._run_command('blkid', "/dev/%s" % dev)
+            retval, stdout, _ = self._run_command(self._find_blkid_bin(), "/dev/%s" % dev)
             if retval == 0:
                 # found using blkid
                 # parse blockid output
@@ -151,13 +175,14 @@ class DriveManager(BaseCmdLine, BaseFile):
                 model = ""
             size = int(self._file_content("/sys/class/block/%s/size" % dev).strip())
             size = size / float(2 * (1024 ** 2))
-            size = "{0:,.1f}".format(size).replace(',', ' ') if size > 0.0 else "0"
+            size = "{0:,.1f}".format(size).replace(",", " ") if size > 0.0 else "0"
 
             # build description
             description = " - ".join([e for e in [label, vendor] if e])
             description = " ".join([e for e in [description, model] if e])
-            description = "%s (%s GiB)" % (description, size) if description \
-                else "Size %s GiB" % size
+            description = (
+                "%s (%s GiB)" % (description, size) if description else "Size %s GiB" % size
+            )
 
             ret.append({"dev": dev, "description": description, "fs": fs, "uuid": uuid})
         return {"drives": ret}
@@ -165,9 +190,6 @@ class DriveManager(BaseCmdLine, BaseFile):
     def prepare_srv_drive(self, srv):
         if srv.get("raid", False):
             with UciBackend() as backend:
-                backend.set_option("storage", "srv", "raid", srv['raid'])
-        self._run_command_and_check_retval(
-            ["/usr/libexec/format_and_set_srv.sh"] + srv['drives'],
-            0
-        )
-        return { "result": True }
+                backend.set_option("storage", "srv", "raid", srv["raid"])
+        retval, _, _ = self._run_command("/usr/libexec/format_and_set_srv.sh", *srv["drives"])
+        return {"result": retval == 0}

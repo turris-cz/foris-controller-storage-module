@@ -26,40 +26,27 @@ Storage module for foris-controller
 """
 
 setup(
-    name='foris-controller-storage-module',
+    name="foris-controller-storage-module",
     version=__version__,
-    author='CZ.NIC, z.s.p.o. (http://www.nic.cz/)',
-    author_email='stepan.henek@nic.cz',
+    author="CZ.NIC, z.s.p.o. (http://www.nic.cz/)",
+    author_email="stepan.henek@nic.cz",
     packages=[
-        'foris_controller_storage_module',
-        'foris_controller_backends',
-        'foris_controller_backends.storage',
-        'foris_controller_modules',
-        'foris_controller_modules.storage',
-        'foris_controller_modules.storage.handlers',
+        "foris_controller_storage_module",
+        "foris_controller_backends",
+        "foris_controller_backends.storage",
+        "foris_controller_modules",
+        "foris_controller_modules.storage",
+        "foris_controller_modules.storage.handlers",
     ],
-    package_data={
-        'foris_controller_modules.storage': ['schema', 'schema/*.json'],
-    },
-    namespace_packages=[
-        'foris_controller_modules',
-        'foris_controller_backends',
-    ],
+    package_data={"foris_controller_modules.storage": ["schema", "schema/*.json"]},
+    namespace_packages=["foris_controller_modules", "foris_controller_backends"],
     description=DESCRIPTION,
-    long_description=open('README.rst').read(),
+    long_description=open("README.rst").read(),
     install_requires=[
-        "foris-controller @ git+https://gitlab.labs.nic.cz/turris/foris-controller/foris-controller.git#egg=foris-controller",
+        "foris-controller @ git+https://gitlab.labs.nic.cz/turris/foris-controller/foris-controller.git#egg=foris-controller"
     ],
-    setup_requires=[
-        'pytest-runner'
-    ],
-    tests_require=[
-        'pytest',
-        'foris-controller-testtools',
-        'foris-client',
-        'ubus',
-        'paho-mqtt',
-    ],
+    setup_requires=["pytest-runner"],
+    tests_require=["pytest", "foris-controller-testtools", "foris-client", "ubus", "paho-mqtt"],
     dependency_links=[
         "git+https://gitlab.labs.nic.cz/turris/foris-controller/foris-controller-testtools.git#egg=foris-controller-testtools",
         "git+https://gitlab.labs.nic.cz/turris/foris-controller/foris-client.git#egg=foris-client",

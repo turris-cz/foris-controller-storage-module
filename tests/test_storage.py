@@ -23,8 +23,13 @@ import textwrap
 from .conftest import file_root, CMDLINE_SCRIPT_ROOT
 
 from foris_controller_testtools.fixtures import (
-    infrastructure, ubusd_test, uci_configs_init, file_root_init, FILE_ROOT_PATH,
-    start_buses, mosquitto_test
+    infrastructure,
+    ubusd_test,
+    uci_configs_init,
+    file_root_init,
+    FILE_ROOT_PATH,
+    start_buses,
+    mosquitto_test,
 )
 
 from foris_controller_testtools.utils import FileFaker
@@ -32,10 +37,13 @@ from foris_controller_testtools.utils import FileFaker
 
 @pytest.fixture(params=["/", "/srv"], ids=["srv_not_mounted", "srv_mounted"], scope="function")
 def stat_cmd(request):
-    content = """\
+    content = (
+        """\
         #!/bin/sh
         echo %s
-    """ % request.param
+    """
+        % request.param
+    )
     with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/bin/stat", True, textwrap.dedent(content)) as f:
         yield f, request.param
 
@@ -108,20 +116,24 @@ def formatting_file(request):
     else:
         yield request.param
 
+
 @pytest.fixture(scope="function")
 def nextcloud_installed_file(request):
     with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/index.php", False, "") as f:
         yield f, request.param
+
 
 @pytest.fixture(scope="function")
 def nextcloud_configuring_file(request):
     with FileFaker(FILE_ROOT_PATH, "/tmp/nextcloud_configuring", False, "") as f:
         yield f, request.param
 
+
 @pytest.fixture(scope="function")
 def nextcloud_configured_file(request):
     with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/config/config.php", False, "") as f:
         yield f, request.param
+
 
 @pytest.fixture(scope="function")
 def prepare_srv_drive_sh_cmd(request):
@@ -130,83 +142,90 @@ def prepare_srv_drive_sh_cmd(request):
         exit 0
     """
     with FileFaker(
-        CMDLINE_SCRIPT_ROOT, "/usr/libexec/format_and_set_srv.sh", True,
-        textwrap.dedent(content)
+        CMDLINE_SCRIPT_ROOT, "/usr/libexec/format_and_set_srv.sh", True, textwrap.dedent(content)
     ) as f:
         yield f
 
 
 def test_get_settings(
-    file_root_init, uci_configs_init, infrastructure, start_buses, stat_cmd, mounts_file,
-    blkid_sda_ok_cmd, formatting_file
+    file_root_init,
+    uci_configs_init,
+    infrastructure,
+    start_buses,
+    stat_cmd,
+    mounts_file,
+    blkid_sda_ok_cmd,
+    formatting_file,
 ):
     _, srv_mount = stat_cmd
     _, mounts_file_id = mounts_file
-    res = infrastructure.process_message({
-        "module": "storage",
-        "action": "get_settings",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "storage", "action": "get_settings", "kind": "request"}
+    )
 
-    assert set(res["data"].keys()) >= {
-        u"formating",
-        u"nextcloud_installed"
-    }
+    assert set(res["data"].keys()) >= {u"formating", u"nextcloud_installed"}
 
     if infrastructure.backend_name != "mock":
         assert res["data"]["formating"] is formatting_file
 
+
 def test_get_state(
-    file_root_init, uci_configs_init, infrastructure, start_buses, stat_cmd, mounts_file,
-    blkid_sda_ok_cmd, formatting_file
+    file_root_init,
+    uci_configs_init,
+    infrastructure,
+    start_buses,
+    stat_cmd,
+    mounts_file,
+    blkid_sda_ok_cmd,
+    formatting_file,
 ):
     _, srv_mount = stat_cmd
     _, mounts_file_id = mounts_file
-    res = infrastructure.process_message({
-        "module": "storage",
-        "action": "get_state",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "storage", "action": "get_state", "kind": "request"}
+    )
 
-    assert set(res["data"].keys()) >= {
-        u"blocked",
-    }
+    assert set(res["data"].keys()) >= {u"blocked"}
 
     if infrastructure.backend_name != "mock":
         assert res["data"]["blocked"] is formatting_file
 
+
 def test_get_drives(
     file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd
 ):
-    res = infrastructure.process_message({
-        "module": "storage",
-        "action": "get_drives",
-        "kind": "request",
-    })
+    res = infrastructure.process_message(
+        {"module": "storage", "action": "get_drives", "kind": "request"}
+    )
     assert "data" in res
     assert "drives" in res["data"]
+
 
 def test_prepare_srv_drive(
     file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
 ):
-    res = infrastructure.process_message({
-        "module": "storage",
-        "action": "prepare_srv_drive",
-        "kind": "request",
-        "data": {"drives": ["sda"]},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "storage",
+            "action": "prepare_srv_drive",
+            "kind": "request",
+            "data": {"drives": ["sda"]},
+        }
+    )
     assert "errors" not in res
+
 
 def test_update_srv(
     file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
 ):
-    res = infrastructure.process_message({
-        "module": "storage",
-        "action": "update_srv",
-        "kind": "request",
-        "data": {"uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6"},
-    })
+    res = infrastructure.process_message(
+        {
+            "module": "storage",
+            "action": "update_srv",
+            "kind": "request",
+            "data": {"uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6"},
+        }
+    )
     assert "data" in res
     assert "result" in res["data"]
-    assert  res["data"]["result"]
-
+    assert res["data"]["result"]

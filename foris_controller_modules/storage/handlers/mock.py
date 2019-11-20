@@ -42,7 +42,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
             "fs": "btrfs",
             "description": "srv - Generic Flash Disk (7 GiB)",
             "dev": "sda",
-            "uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6"
+            "uuid": "fb002a7a-7504-4f08-882b-09eebb2b26e6",
         }
     ]
 
