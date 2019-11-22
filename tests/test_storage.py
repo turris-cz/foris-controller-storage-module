@@ -163,7 +163,7 @@ def test_get_settings(
         {"module": "storage", "action": "get_settings", "kind": "request"}
     )
 
-    assert set(res["data"].keys()) >= {u"formating", u"nextcloud_installed"}
+    assert res["data"].keys() >= {"formating", "nextcloud_installed"}
 
     if infrastructure.backend_name != "mock":
         assert res["data"]["formating"] is formatting_file
@@ -185,7 +185,7 @@ def test_get_state(
         {"module": "storage", "action": "get_state", "kind": "request"}
     )
 
-    assert set(res["data"].keys()) >= {u"blocked"}
+    assert res["data"].keys() >= {"blocked"}
 
     if infrastructure.backend_name != "mock":
         assert res["data"]["blocked"] is formatting_file
