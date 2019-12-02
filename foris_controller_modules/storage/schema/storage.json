@@ -82,7 +82,7 @@
                     "type": "object",
                     "properties": {
                         "uuid": {"$ref": "#/definitions/uuid_or_empty"},
-                        "old_uuid": {"$ref": "#/definitions/uuid"},
+                        "old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
                         "old_device_desc": {"type": "string"},
                         "blocked": {"type": "boolean"},
                         "state": {"$ref": "#/definitions/state"},
