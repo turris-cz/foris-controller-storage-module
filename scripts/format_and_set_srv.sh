@@ -130,24 +130,13 @@ if [ -z "$UUID" ]; then
    shift
 
    # Commit configuration
-   SRV="$(stat -c %m /srv/)"
-   SRV_DEV=""
-   SRV_UUID=""
-   if grep -q '^ubi[^[:blank:]]* '"$SRV"' .*' /proc/mounts || \
-      grep -q '^[^[:blank:]]* /srv tmpfs.*' /proc/mounts; then
-       SRV_UUID="rootfs"
-   else
-       [ -z "$SRV" ] || SRV_DEV="$(sed -n 's|^\(/dev/[^[:blank:]]*\) '"$SRV"' .*|\1|p' /proc/mounts)"
-       [ -z "$SRV_DEV" ] || SRV_UUID="$(blkid -c /dev/null "$SRV_DEV" -s UUID -o value)"
-   fi
-   [ -n "$SRV_UUID" ] || die "Can't find your current srv location"
    uci set storage.srv.uuid="$UUID"
-   uci set storage.srv.old_uuid="$SRV_UUID"
+   uci set storage.srv.old_uuid="rootfs"
    uci commit storage
 fi
 
 # Make sure we have /srv mounted somewhere
-if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ]; then
+if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ] || [ "$(stat -fc %T /srv/)" \!= "btrfs" ]; then
    SRV_MNT_PNT="/tmp/storage_plugin/tmpdir"
    mkdir -p "$SRV_MNT_PNT"
    DEV="$(blkid -c /dev/null -U "$UUID")"
