@@ -118,6 +118,11 @@ fi
 # Reset arguments to make sure we have absolute paths to drives
 set $(cat /tmp/storage_plugin/formating)
 
+# Is there a drive with desired UUID?
+# If not, assume it's lost and go through first setup (clear saved UUID)
+DEV="$(blkid -c /dev/null -U "$UUID")"
+[ -n "$DEV" ] || UUID=""
+
 # Are we are starting from scratch
 if [ -z "$UUID" ]; then
    format_drive "$1"
