@@ -1,8 +1,6 @@
 import logging
 import os
-import re
 import shlex
-import subprocess
 
 from foris_controller_backends.uci import UciBackend, get_option_named
 from foris_controller_backends.cmdline import BaseCmdLine
@@ -91,16 +89,14 @@ class SettingsUci(BaseCmdLine, BaseFile):
         }
 
     def update_srv(self, srv):
-
-        res = True
         try:
             with UciBackend() as backend:
-                if srv.get("uuid", False):
-                    backend.add_section("storage", "srv", "srv")
-                    backend.set_option("storage", "srv", "uuid", srv.get("uuid", ""))
+                backend.add_section("storage", "srv", "srv")
+                backend.set_option("storage", "srv", "uuid", srv["uuid"])
+            return {"result": True}
+
         except UciException:
-            res = False
-        return {"result": res}
+            return {"result": False}
 
 
 class SoftwareManager(BaseCmdLine, BaseFile):
