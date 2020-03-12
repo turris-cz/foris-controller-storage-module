@@ -31,7 +31,7 @@ start() {
 		sleep 1
 		i="$(expr $i + 1)"
 	done
-	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID"
+	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID."
 
 	# Symlink workaround
 	if [ -L /srv ]; then
@@ -42,12 +42,12 @@ start() {
 
 	# Mount it
 	if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
-		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv"
-		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features"
+		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv."
+		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features."
 	else
 		local subvol
 		config_get subvol srv subvolume '@'
-		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount $DEV as /srv"
+		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount $DEV as /srv."
 	fi
 
 	# Find root device
@@ -66,13 +66,13 @@ start() {
         if [ -n "$OLD_DEV" ] || [ -n "$link_tgt" ]; then
 		mkdir -p /tmp/old-srv
 		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs"
+			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
 		elif [ -n "$link_tgt" ]; then
 			mkdir -p /tmp/old-srv/srv
-			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg" 
+			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg."
 		else
 			mkdir -p /tmp/old-srv/srv
-			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV"
+			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
 		fi
 
                 # Migrate stuff
@@ -91,9 +91,9 @@ start() {
 		uci set storage.srv.old_uuid=""
 		uci commit storage.srv.old_uuid
 		if [ -n "$link_tgt" ]; then
-			create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually"
+			create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually."
 		else
-			create_notification -s news "Your /srv was successfully moved from $OLD_DEV to $DEV"
+			create_notification -s news "Your /srv was successfully moved from $OLD_DEV to $DEV."
 		fi
         fi
 }

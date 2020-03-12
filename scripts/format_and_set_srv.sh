@@ -123,7 +123,7 @@ set $(cat /tmp/storage_plugin/formating)
 DEV="$(blkid -c /dev/null -U "$UUID")"
 [ -n "$DEV" ] || UUID=""
 
-# Are we are starting from scratch
+# Are we starting from scratch?
 if [ -z "$UUID" ]; then
    format_drive "$1"
    FROM_SCRATCH="yes"
@@ -141,7 +141,7 @@ if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ] || [ "$(stat -fc %T /srv/)" \!=
    mkdir -p "$SRV_MNT_PNT"
    DEV="$(blkid -c /dev/null -U "$UUID")"
    [ -n "$DEV" ] || die "Can't find device with UUID $UUID"
-   mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV"
+   mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV."
 fi
 
 CHANGED=""
