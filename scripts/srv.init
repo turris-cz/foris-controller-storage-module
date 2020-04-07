@@ -31,7 +31,7 @@ start() {
 		sleep 1
 		i="$(expr $i + 1)"
 	done
-	[ -n "$DEV" ] || die "Can't find disk with UUID $UUID."
+	[ -n "$DEV" ] || die "Can't find disk that has $UUID uuid."
 
 	# Symlink workaround
 	if [ -L /srv ]; then
@@ -47,7 +47,7 @@ start() {
 	else
 		local subvol
 		config_get subvol srv subvolume '@'
-		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount $DEV as /srv."
+		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount device $DEV as /srv for data storage."
 	fi
 
 	# Find root device
@@ -69,7 +69,7 @@ start() {
 			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
 		elif [ -n "$link_tgt" ]; then
 			mkdir -p /tmp/old-srv/srv
-			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg."
+			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg to migrate data."
 		else
 			mkdir -p /tmp/old-srv/srv
 			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
@@ -93,7 +93,7 @@ start() {
 		if [ -n "$link_tgt" ]; then
 			create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually."
 		else
-			create_notification -s news "Your /srv was successfully moved from $OLD_DEV to $DEV."
+			create_notification -s news "Your /srv was successfully moved from device $OLD_DEV to $DEV device."
 		fi
         fi
 }

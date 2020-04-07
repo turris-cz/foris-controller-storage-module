@@ -141,7 +141,7 @@ if [ "$(stat -c %m /srv/)" = "$(stat -c %m /)" ] || [ "$(stat -fc %T /srv/)" \!=
    mkdir -p "$SRV_MNT_PNT"
    DEV="$(blkid -c /dev/null -U "$UUID")"
    [ -n "$DEV" ] || die "Can't find device with UUID $UUID"
-   mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV."
+   mount -t btrfs -o subvol=@ "$DEV" "$SRV_MNT_PNT" || die "Can't mount $DEV device."
 fi
 
 CHANGED=""
