@@ -22,6 +22,9 @@ class StorageModule(BaseModule):
     def action_prepare_srv_drive(self, data):
         return self.handler.prepare_srv_drive(data)
 
+    def action_update_settings(self, data):
+        return self.handler.update_settings(data)
+
 
 @wrap_required_functions(
     [
@@ -30,6 +33,7 @@ class StorageModule(BaseModule):
         "update_srv",
         "get_drives",
         "prepare_srv_drive",
+        "update_settings"
     ]
 )
 class Handler(object):

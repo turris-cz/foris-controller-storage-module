@@ -11,7 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
-
     settings = SettingsUci()
     drives = DriveManager()
 
@@ -34,3 +33,7 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
         return self.drives.prepare_srv_drive(srv)
+
+    @logger_wrapper(logger)
+    def update_settings(self, data):
+        return self.settings.update_settings(data)

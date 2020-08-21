@@ -60,7 +60,8 @@
                         "old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
                         "old_device": {"type": "string"},
                         "formating": {"type": "boolean"},
-                        "state": {"type": "string"}
+                        "state": {"type": "string"},
+                        "persistent_logs" : {"type": "boolean"}
                     },
                     "additionalProperties": false,
                     "required": ["formating"]
@@ -83,7 +84,8 @@
                         "old_device_desc": {"type": "string"},
                         "blocked": {"type": "boolean"},
                         "state": {"$ref": "#/definitions/state"},
-                        "raid": {"$ref": "#/definitions/raid"}
+                        "raid": {"$ref": "#/definitions/raid"},
+                        "persistent_logs": {"type": "boolean"}
                     },
                     "additionalProperties": false,
                     "required": ["blocked", "uuid" ]
@@ -198,10 +200,50 @@
                 "action": {"enum": ["update_srv"]},
                 "data": {
                     "type": "object",
-                    "additionalProperties": false,
                     "properties": {
                         "result": {"type": "boolean"}
                     },
+                    "additionalProperties": false,
+                    "required": ["result"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Modify various storage uci configurations",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["request"]},
+                "action": {"enum":  ["update_settings"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "persistent_logs": {
+                            "type": "boolean"
+                        }
+                    },
+                    "additionalProperties": false,
+                    "required": ["persistent_logs"]
+                }
+            },
+            "additionalProperties": false,
+            "required": ["data"]
+        },
+        {
+            "description": "Modify various storage uci configurations",
+            "properties": {
+                "module": {"enum": ["storage"]},
+                "kind": {"enum": ["reply"]},
+                "action": {"enum":  ["update_settings"]},
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "result": {
+                            "type":"boolean"
+                        }
+                    },
+                    "additionalProperties": false,
                     "required": ["result"]
                 }
             },

@@ -30,6 +30,7 @@ from foris_controller_testtools.fixtures import (
     FILE_ROOT_PATH,
     start_buses,
     mosquitto_test,
+    only_backends
 )
 
 from foris_controller_testtools.utils import FileFaker
@@ -211,3 +212,39 @@ def test_update_srv(
     assert "data" in res
     assert "result" in res["data"]
     assert res["data"]["result"]
+
+
+@pytest.mark.parametrize("state", [True, False])
+def test_update_settings(
+    file_root_init,
+    uci_configs_init,
+    infrastructure,
+    start_buses,
+    stat_cmd,
+    mounts_file,
+    blkid_sda_ok_cmd,
+    formatting_file,
+    state
+):
+    _, srv_mount = stat_cmd
+    _, mounts_file_id = mounts_file
+
+    res = infrastructure.process_message(
+        {
+            "module": "storage",
+            "action": "update_settings",
+            "data": {
+                "persistent_logs": state
+            }
+        }
+    )
+
+    assert "errors" not in res.keys()
+    assert res["data"]["result"]
+
+    res2 = infrastructure.process_message(
+        {"module": "storage", "action": "get_settings", "kind": "request"}
+    )
+
+    assert "errors" not in res2.keys()
+    assert res2["data"]["persistent_logs"] is state

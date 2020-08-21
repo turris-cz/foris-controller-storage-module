@@ -32,6 +32,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
     old_uuid = "rootfs"
     uuid = ""
     formatting = False
+    persistent_logs = True
 
     drives = [
         {
@@ -48,7 +49,8 @@ class MockStorageHandler(Handler, BaseMockHandler):
             "old_device": MockStorageHandler.old_device,
             "old_uuid": MockStorageHandler.old_uuid,
             "uuid": MockStorageHandler.uuid,
-            "formating": MockStorageHandler.formatting
+            "formating": MockStorageHandler.formatting,
+            "persistent_logs": MockStorageHandler.persistent_logs
         }
 
     @logger_wrapper(logger)
@@ -70,4 +72,9 @@ class MockStorageHandler(Handler, BaseMockHandler):
 
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
+        return {"result": True}
+
+    @logger_wrapper(logger)
+    def update_settings(self, data):
+        MockStorageHandler.persistent_logs = data["persistent_logs"]
         return {"result": True}

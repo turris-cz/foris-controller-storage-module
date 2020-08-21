@@ -2,7 +2,7 @@ import logging
 import os
 import shlex
 
-from foris_controller_backends.uci import UciBackend, get_option_named
+from foris_controller_backends.uci import UciBackend, get_option_named, store_bool, parse_bool
 from foris_controller_backends.cmdline import BaseCmdLine
 from foris_controller_backends.files import BaseFile, inject_file_root, path_exists
 from foris_controller.exceptions import (
@@ -24,6 +24,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         old_uuid = ""
         uuid = get_option_named(data, "storage", "srv", "uuid", "")
         raid = get_option_named(data, "storage", "srv", "raid", "custom")
+        persistent_logs = parse_bool(get_option_named(data, "storage", "srv", "syslog", "1"))
         # get mountpoint of /srv
         srv_mount_point = self._trigger_and_parse(["stat", "-c", "%m", "/srv"], r"\s*(.*)\s*")
 
@@ -70,9 +71,11 @@ class SettingsUci(BaseCmdLine, BaseFile):
             "blocked": os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")),
             "state": state,
             "raid": raid,
+            "persistent_logs": persistent_logs,
         }
 
     def get_srv(self):
+        """ Function is depracated, kept for compatibility with Foris. """
         state = self.get_state()
 
         return {
@@ -80,7 +83,8 @@ class SettingsUci(BaseCmdLine, BaseFile):
             "old_uuid": state["old_uuid"],
             "old_device": state["old_device_desc"],
             "formating": state["blocked"],
-            "state": state["state"]
+            "state": state["state"],
+            "persistent_logs": state["persistent_logs"]
         }
 
     def update_srv(self, srv):
@@ -90,6 +94,15 @@ class SettingsUci(BaseCmdLine, BaseFile):
                 backend.set_option("storage", "srv", "uuid", srv["uuid"])
             return {"result": True}
 
+        except UciException:
+            return {"result": False}
+
+    def update_settings(self, data):
+        try:
+            with UciBackend() as backend:
+                backend.add_section("storage", "srv", "srv")
+                backend.set_option("storage", "srv", "syslog", store_bool(data["persistent_logs"]))
+            return {"result": True}
         except UciException:
             return {"result": False}
 
