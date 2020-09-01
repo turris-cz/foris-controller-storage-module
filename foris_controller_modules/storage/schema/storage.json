@@ -60,13 +60,10 @@
                         "old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
                         "old_device": {"type": "string"},
                         "formating": {"type": "boolean"},
-                        "state": {"type": "string"},
-                        "nextcloud_installed": {"type": "boolean"},
-                        "nextcloud_configured": {"type": "boolean"},
-                        "nextcloud_configuring": {"type": "boolean"}
+                        "state": {"type": "string"}
                     },
                     "additionalProperties": false,
-                    "required": ["nextcloud_installed", "formating" ]
+                    "required": ["formating"]
                 }
             },
             "additionalProperties": false,
@@ -206,44 +203,6 @@
                         "result": {"type": "boolean"}
                     },
                     "required": ["result"]
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data"]
-        },
-        {
-            "description": "Setup Nextcloud",
-            "properties": {
-                "module": {"enum": ["storage"]},
-                "kind": {"enum": ["request"]},
-                "action": {"enum": ["configure_nextcloud"]},
-                "data": {
-                    "type": "object",
-                    "properties": {
-                        "credentials": {
-                            "type": "object",
-                            "properties": {
-                                "login": {"type": "string"},
-                                "password": {"type": "string"}
-                            }
-                        }
-                    },
-                    "additionalProperties": false,
-                    "required": ["credentials"]
-                }
-            },
-            "additionalProperties": false,
-            "required": ["data"]
-        },
-        {
-            "description": "Drive preparation reply",
-            "properties": {
-                "module": {"enum": ["storage"]},
-                "kind": {"enum": ["reply"]},
-                "action": {"enum": ["configure_nextcloud"]},
-                "data": {
-                    "type": "object",
-                    "additionalProperties": true
                 }
             },
             "additionalProperties": false,

@@ -22,15 +22,11 @@ class StorageModule(BaseModule):
     def action_prepare_srv_drive(self, data):
         return self.handler.prepare_srv_drive(data)
 
-    def action_configure_nextcloud(self, data):
-        return self.handler.configure_nextcloud(data)
-
 
 @wrap_required_functions(
     [
         "get_settings",
         "get_state",
-        "configure_nextcloud",
         "update_srv",
         "get_drives",
         "prepare_srv_drive",

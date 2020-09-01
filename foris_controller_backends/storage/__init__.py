@@ -80,12 +80,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
             "old_uuid": state["old_uuid"],
             "old_device": state["old_device_desc"],
             "formating": state["blocked"],
-            "state": state["state"],
-            "nextcloud_installed": os.path.isfile(inject_file_root("/srv/www/nextcloud/index.php")),
-            "nextcloud_configuring": os.path.isfile(inject_file_root("/tmp/nextcloud_configuring")),
-            "nextcloud_configured": os.path.isfile(
-                inject_file_root("/srv/www/nextcloud/config/config.php")
-            ),
+            "state": state["state"]
         }
 
     def update_srv(self, srv):
@@ -97,20 +92,6 @@ class SettingsUci(BaseCmdLine, BaseFile):
 
         except UciException:
             return {"result": False}
-
-
-class SoftwareManager(BaseCmdLine, BaseFile):
-    def configure_nextcloud(self, creds):
-        data = self._run_command_and_check_retval(
-            [
-                "nextcloud_install",
-                "--batch",
-                creds["credentials"]["login"],
-                creds["credentials"]["password"],
-            ],
-            0,
-        )
-        return {"result": data}
 
 
 class DriveManager(BaseCmdLine, BaseFile):

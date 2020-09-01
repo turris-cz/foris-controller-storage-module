@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -118,24 +118,6 @@ def formatting_file(request):
 
 
 @pytest.fixture(scope="function")
-def nextcloud_installed_file(request):
-    with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/index.php", False, "") as f:
-        yield f, request.param
-
-
-@pytest.fixture(scope="function")
-def nextcloud_configuring_file(request):
-    with FileFaker(FILE_ROOT_PATH, "/tmp/nextcloud_configuring", False, "") as f:
-        yield f, request.param
-
-
-@pytest.fixture(scope="function")
-def nextcloud_configured_file(request):
-    with FileFaker(FILE_ROOT_PATH, "/srv/www/nextcloud/config/config.php", False, "") as f:
-        yield f, request.param
-
-
-@pytest.fixture(scope="function")
 def prepare_srv_drive_sh_cmd(request):
     content = """\
         #!/bin/sh
@@ -163,7 +145,7 @@ def test_get_settings(
         {"module": "storage", "action": "get_settings", "kind": "request"}
     )
 
-    assert res["data"].keys() >= {"formating", "nextcloud_installed"}
+    assert res["data"].keys() >= {"formating"}
 
     if infrastructure.backend_name != "mock":
         assert res["data"]["formating"] is formatting_file

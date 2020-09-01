@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,10 +33,6 @@ class MockStorageHandler(Handler, BaseMockHandler):
     uuid = ""
     formatting = False
 
-    nextcloud_installed = False
-    nextcloud_configured = False
-    nextcloud_configuring = False
-
     drives = [
         {
             "fs": "btrfs",
@@ -52,10 +48,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
             "old_device": MockStorageHandler.old_device,
             "old_uuid": MockStorageHandler.old_uuid,
             "uuid": MockStorageHandler.uuid,
-            "formating": MockStorageHandler.formatting,
-            "nextcloud_installed": MockStorageHandler.nextcloud_installed,
-            "nextcloud_configured": MockStorageHandler.nextcloud_configured,
-            "nextcloud_configuring": MockStorageHandler.nextcloud_configuring,
+            "formating": MockStorageHandler.formatting
         }
 
     @logger_wrapper(logger)
@@ -78,7 +71,3 @@ class MockStorageHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def prepare_srv_drive(self, srv):
         return {"result": True}
-
-    @logger_wrapper(logger)
-    def configure_nextcloud(self, srv):
-        return {}
