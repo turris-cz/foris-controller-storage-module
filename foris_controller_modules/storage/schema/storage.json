@@ -80,8 +80,9 @@
                     "type": "object",
                     "properties": {
                         "uuid": {"$ref": "#/definitions/uuid_or_empty"},
-                        "old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
-                        "old_device_desc": {"type": "string"},
+			"old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
+                        "using_external": {"type": "boolean"},
+                        "current_device": {"type": "string"},
                         "blocked": {"type": "boolean"},
                         "state": {"$ref": "#/definitions/state"},
                         "raid": {"$ref": "#/definitions/raid"},

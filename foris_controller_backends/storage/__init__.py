@@ -67,7 +67,8 @@ class SettingsUci(BaseCmdLine, BaseFile):
         return {
             "uuid": uuid,
             "old_uuid": old_uuid,
-            "old_device_desc": old_device,
+            "using_external": (old_uuid != "rootfs" and old_uuid != "broken"),
+            "current_device": old_device,
             "blocked": os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")),
             "state": state,
             "raid": raid,
@@ -81,7 +82,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         return {
             "uuid": state["uuid"],
             "old_uuid": state["old_uuid"],
-            "old_device": state["old_device_desc"],
+            "old_device": state["current_device"],
             "formating": state["blocked"],
             "state": state["state"],
             "persistent_logs": state["persistent_logs"]

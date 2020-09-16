@@ -31,6 +31,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
     old_device = "/dev/mmcblk0p1"
     old_uuid = "rootfs"
     uuid = ""
+    using_external = False
     formatting = False
     persistent_logs = True
 
@@ -46,8 +47,8 @@ class MockStorageHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def get_settings(self):
         return {
-            "old_device": MockStorageHandler.old_device,
-            "old_uuid": MockStorageHandler.old_uuid,
+            "current_device": MockStorageHandler.old_device,
+            "using_external": MockStorageHandler.using_external,
             "uuid": MockStorageHandler.uuid,
             "formating": MockStorageHandler.formatting,
             "persistent_logs": MockStorageHandler.persistent_logs
