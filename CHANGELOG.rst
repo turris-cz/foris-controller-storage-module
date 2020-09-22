@@ -1,3 +1,32 @@
+0.5 (2020-09-22)
+----------------
+
+* remove nextcloud code from storage
+
+0.4.2 (2020-04-07)
+------------------
+
+* simplify first setup
+* fix behaviour with lost disk
+* improve notifications
+
+0.4.1 (2019-12-02)
+------------------
+
+* fix schema to work with empty old_uuid
+
+0.4 (2019-11-22)
+----------------
+
+* Changes in API to better support new features, should be backward compatible.
+
+0.3.1 (2019-10-11)
+------------------
+
+* prepared new cleaner API
+* fix few minor issues
+* optional undocumented mounting of different subvolume
+
 0.3.0 (2019-09-13)
 ------------------
 
