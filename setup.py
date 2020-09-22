@@ -40,6 +40,8 @@ setup(
     ],
     package_data={"foris_controller_modules.storage": ["schema", "schema/*.json"]},
     namespace_packages=["foris_controller_modules", "foris_controller_backends"],
+    url='https://gitlab.nic.cz/turris/foris-controller/foris-controller-storage-module',
+    license='GPL-3.0-only',
     description=DESCRIPTION,
     long_description=open("README.rst").read(),
     install_requires=[
