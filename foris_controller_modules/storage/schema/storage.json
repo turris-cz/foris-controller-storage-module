@@ -6,7 +6,7 @@
         "uuid_or_empty": {
             "oneOf": [
                 {"$ref": "#/definitions/uuid"},
-                {"type": "string", "maxLength": 0}
+                {"enum": [""]}
             ]
         }
     },
@@ -64,7 +64,7 @@
                         "persistent_logs" : {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["formating"]
+                    "required": ["uuid", "old_uuid", "old_device", "formating", "state"]
                 }
             },
             "additionalProperties": false,
@@ -80,7 +80,6 @@
                     "type": "object",
                     "properties": {
                         "uuid": {"$ref": "#/definitions/uuid_or_empty"},
-			"old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
                         "using_external": {"type": "boolean"},
                         "current_device": {"type": "string"},
                         "blocked": {"type": "boolean"},
@@ -89,7 +88,7 @@
                         "persistent_logs": {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["blocked", "uuid" ]
+                    "required": ["uuid", "using_external", "current_device", "blocked", "state", "raid"]
                 }
             },
             "additionalProperties": false,
