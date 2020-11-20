@@ -24,13 +24,9 @@ from .conftest import file_root, CMDLINE_SCRIPT_ROOT
 
 from foris_controller_testtools.fixtures import (
     infrastructure,
-    ubusd_test,
     uci_configs_init,
     file_root_init,
     FILE_ROOT_PATH,
-    start_buses,
-    mosquitto_test,
-    only_backends
 )
 
 from foris_controller_testtools.utils import FileFaker
@@ -136,7 +132,6 @@ def test_get_settings(
     file_root_init,
     uci_configs_init,
     infrastructure,
-    start_buses,
     stat_cmd,
     mounts_file,
     blkid_sda_ok_cmd,
@@ -158,7 +153,6 @@ def test_get_state(
     file_root_init,
     uci_configs_init,
     infrastructure,
-    start_buses,
     stat_cmd,
     mounts_file,
     blkid_sda_ok_cmd,
@@ -177,7 +171,7 @@ def test_get_state(
 
 
 def test_get_drives(
-    file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd, mounts_file
+    file_root_init, uci_configs_init, infrastructure, blkid_sda_ok_cmd, mounts_file
 ):
     res = infrastructure.process_message(
         {"module": "storage", "action": "get_drives", "kind": "request"}
@@ -187,7 +181,7 @@ def test_get_drives(
 
 
 def test_prepare_srv_drive(
-    file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
+    file_root_init, uci_configs_init, infrastructure, prepare_srv_drive_sh_cmd
 ):
     res = infrastructure.process_message(
         {
@@ -201,7 +195,7 @@ def test_prepare_srv_drive(
 
 
 def test_update_srv(
-    file_root_init, uci_configs_init, infrastructure, start_buses, prepare_srv_drive_sh_cmd
+    file_root_init, uci_configs_init, infrastructure, prepare_srv_drive_sh_cmd
 ):
     res = infrastructure.process_message(
         {
@@ -221,7 +215,6 @@ def test_update_settings(
     file_root_init,
     uci_configs_init,
     infrastructure,
-    start_buses,
     stat_cmd,
     mounts_file,
     blkid_sda_ok_cmd,
