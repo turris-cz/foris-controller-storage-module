@@ -16,7 +16,7 @@ class OpenwrtStorageHandler(Handler, BaseOpenwrtHandler):
 
     @logger_wrapper(logger)
     def get_settings(self):
-        return self.settings.get_srv()
+        return self.settings.get_settings()
 
     @logger_wrapper(logger)
     def get_state(self):

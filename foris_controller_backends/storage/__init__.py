@@ -2,7 +2,7 @@ import logging
 import os
 import shlex
 
-from foris_controller_backends.uci import UciBackend, get_option_named, store_bool, parse_bool
+from foris_controller_backends.uci import UciBackend, get_option_named, parse_bool, store_bool
 from foris_controller_backends.cmdline import BaseCmdLine
 from foris_controller_backends.files import BaseFile, inject_file_root, path_exists
 from foris_controller.exceptions import (
@@ -17,7 +17,10 @@ logger = logging.getLogger(__name__)
 
 class SettingsUci(BaseCmdLine, BaseFile):
     def get_state(self):
+        """ Get storage state
 
+        Successor of deprecated get_settings()
+        """
         with UciBackend() as backend:
             data = backend.read("storage")
 
@@ -67,7 +70,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         return {
             "uuid": uuid,
             "old_uuid": old_uuid,
-            "using_external": (old_uuid != "rootfs" and old_uuid != "broken"),
+            "using_external": old_uuid not in ("rootfs", "broken"),
             "current_device": old_device,
             "blocked": os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")),
             "state": state,
@@ -75,8 +78,12 @@ class SettingsUci(BaseCmdLine, BaseFile):
             "persistent_logs": persistent_logs,
         }
 
-    def get_srv(self):
-        """ Function is depracated, kept for compatibility with Foris. """
+    def get_settings(self):
+        """ Get storage settings
+
+        Deprecated function, kept for compatibility with Foris
+        Use get_state() in new code
+        """
         state = self.get_state()
 
         return {
@@ -89,6 +96,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
         }
 
     def update_srv(self, srv):
+        """ Update settings for /srv mountpoint """
         try:
             with UciBackend() as backend:
                 backend.add_section("storage", "srv", "srv")

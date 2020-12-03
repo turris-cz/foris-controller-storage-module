@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ class MockStorageHandler(Handler, BaseMockHandler):
     using_external = False
     formatting = False
     persistent_logs = True
+    state = "none"
+    raid = "single"
 
     drives = [
         {
@@ -47,20 +49,25 @@ class MockStorageHandler(Handler, BaseMockHandler):
     @logger_wrapper(logger)
     def get_settings(self):
         return {
-            "current_device": MockStorageHandler.old_device,
-            "using_external": MockStorageHandler.using_external,
             "uuid": MockStorageHandler.uuid,
+            "old_uuid": MockStorageHandler.old_uuid,
+            "old_device": MockStorageHandler.old_device,
             "formating": MockStorageHandler.formatting,
+            "state": MockStorageHandler.state,
             "persistent_logs": MockStorageHandler.persistent_logs
         }
 
     @logger_wrapper(logger)
     def get_state(self):
         return {
-            "old_device_desc": MockStorageHandler.old_device,
-            "old_uuid": MockStorageHandler.old_uuid,
             "uuid": MockStorageHandler.uuid,
+            # old_uuid is not needed, but will be filtered out later
+            "old_uuid": MockStorageHandler.old_uuid,
+            "using_external": MockStorageHandler.using_external,
+            "current_device": MockStorageHandler.old_device,
             "blocked": MockStorageHandler.formatting,
+            "state": MockStorageHandler.state,
+            "raid": MockStorageHandler.raid,
         }
 
     @logger_wrapper(logger)

@@ -8,12 +8,21 @@ class StorageModule(BaseModule):
     logger = logging.getLogger(__name__)
 
     def action_get_settings(self, data):
+        """ Get storage settings
+
+        Deprecated function, kept for compatibility with Foris
+        Use get_state() in new code
+        """
         return self.handler.get_settings()
 
     def action_get_state(self, data):
-        return self.handler.get_state()
+        """ Get storage state """
+        res = self.handler.get_state()
+        del res["old_uuid"]
+        return res
 
     def action_update_srv(self, data):
+        """ Update settings for /srv mountpoint """
         return self.handler.update_srv(data)
 
     def action_get_drives(self, data):
