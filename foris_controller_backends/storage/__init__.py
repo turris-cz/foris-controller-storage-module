@@ -132,6 +132,19 @@ class DriveManager(BaseCmdLine, BaseFile):
             if not dev.startswith("sd"):
                 continue
 
+            # is device mounted somewhere
+            mount = ""
+            try:
+                mount = self._read_and_parse(
+                    "/proc/mounts", r"^/dev/{} (/[^ ]*) .*".format(dev)
+                )
+            except FailedToParseFileContent:
+                pass
+
+            # skip devices mounted as root
+            if mount == "/":
+                continue
+
             retval, stdout, _ = self._run_command(self._find_blkid_bin(), "/dev/%s" % dev)
             if retval == 0:
                 # found using blkid

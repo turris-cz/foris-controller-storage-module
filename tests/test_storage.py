@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018-2020 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -175,7 +175,7 @@ def test_get_state(
 
 
 def test_get_drives(
-    file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd
+    file_root_init, uci_configs_init, infrastructure, start_buses, blkid_sda_ok_cmd, mounts_file
 ):
     res = infrastructure.process_message(
         {"module": "storage", "action": "get_drives", "kind": "request"}
