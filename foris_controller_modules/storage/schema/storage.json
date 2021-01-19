@@ -80,7 +80,9 @@
                     "type": "object",
                     "properties": {
                         "uuid": {"$ref": "#/definitions/uuid_or_empty"},
+                        "old_uuid": {"$ref": "#/definitions/uuid_or_empty"},
                         "using_external": {"type": "boolean"},
+                        "is_broken": {"type": "boolean"},
                         "current_device": {"type": "string"},
                         "blocked": {"type": "boolean"},
                         "state": {"$ref": "#/definitions/state"},
@@ -88,7 +90,7 @@
                         "persistent_logs": {"type": "boolean"}
                     },
                     "additionalProperties": false,
-                    "required": ["uuid", "using_external", "current_device", "blocked", "state", "raid"]
+                    "required": ["uuid", "old_uuid", "using_external", "is_broken", "current_device", "blocked", "state", "raid"]
                 }
             },
             "additionalProperties": false,

@@ -17,9 +17,7 @@ class StorageModule(BaseModule):
 
     def action_get_state(self, data):
         """ Get storage state """
-        res = self.handler.get_state()
-        del res["old_uuid"]
-        return res
+        return self.handler.get_state()
 
     def action_update_srv(self, data):
         """ Update settings for /srv mountpoint """

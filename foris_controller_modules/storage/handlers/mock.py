@@ -36,6 +36,7 @@ class MockStorageHandler(Handler, BaseMockHandler):
     persistent_logs = True
     state = "none"
     raid = "single"
+    is_broken = False
 
     drives = [
         {
@@ -61,9 +62,9 @@ class MockStorageHandler(Handler, BaseMockHandler):
     def get_state(self):
         return {
             "uuid": MockStorageHandler.uuid,
-            # old_uuid is not needed, but will be filtered out later
             "old_uuid": MockStorageHandler.old_uuid,
             "using_external": MockStorageHandler.using_external,
+            "is_broken": MockStorageHandler.is_broken,
             "current_device": MockStorageHandler.old_device,
             "blocked": MockStorageHandler.formatting,
             "state": MockStorageHandler.state,

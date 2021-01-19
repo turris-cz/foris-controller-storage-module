@@ -71,6 +71,7 @@ class SettingsUci(BaseCmdLine, BaseFile):
             "uuid": uuid,
             "old_uuid": old_uuid,
             "using_external": old_uuid not in ("rootfs", "broken"),
+            "is_broken": old_uuid == "broken",
             "current_device": old_device,
             "blocked": os.path.isfile(inject_file_root("/tmp/storage_plugin/formating")),
             "state": state,
