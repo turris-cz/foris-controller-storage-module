@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - cleanup and refactoring in module API (remove `old_uuid`, `old_device_desc`; add `using_external`)
 - more strict json schema constraints
+- ignore device that is used as rootfs
 
 ## [0.6] - 2020-12-04
 ### Added
