@@ -6,6 +6,11 @@ config_get_bool DBG srv debug 0
 config_get UUID srv uuid
 config_get RAID srv raid custom
 
+# Be tolerant and accept raid0 and jbod values for raid
+if [ "$RAID" = "raid0" -o "$RAID" = "jbod" ]; then
+    RAID=single
+fi
+
 FROM_SCRATCH=""
 SRV_MNT_PNT="/srv"
 # Decide how much we want to debug
