@@ -9,7 +9,9 @@ status() {
 
 die() {
 	create_notification -n error "$1"
-	grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts || mount -t tmpfs -o size=50M none /srv
+	if grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts && [ -d /srv ]; then
+       mount -t tmpfs -o size=50M none /srv
+    fi
 	exit 1
 }
 
@@ -24,6 +26,9 @@ start() {
 	[ "$DBG" = 0 ] || set -x
 	[ "$DBG" = 0 ] || exec 2>> /tmp/storage_debug
 	i=0
+
+    # Make sure we have /srv
+    [ -e /srv ] || mkdir -p /srv
 
 	# Try to find a drive
 	while [ $i -lt 10 ] && [ -z "$DEV" ]; do
