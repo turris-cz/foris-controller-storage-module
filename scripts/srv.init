@@ -70,7 +70,7 @@ start() {
 			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
 		elif [ -n "$link_tgt" ]; then
 			mkdir -p /tmp/old-srv/srv
-			[ \! -d "$link_gtg" ] || mount -o bind /"$link_gtg" /tmp/old-srv/srv || die "Can't bind-mount $link_gtg to migrate data."
+			[ \! -d "$link_tgt" ] || mount -o bind /"$link_tgt" /tmp/old-srv/srv || die "Can't bind-mount $link_tgt to migrate data."
 		else
 			mkdir -p /tmp/old-srv/srv
 			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
