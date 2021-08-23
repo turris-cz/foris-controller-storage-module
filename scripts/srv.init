@@ -4,114 +4,117 @@ START=35
 STOP=90
 
 status() {
-        return 0
+    return 0
 }
 
 die() {
-	create_notification -n error "$1"
-	if grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts && [ -d /srv ]; then
+    create_notification -n error "$1"
+    if grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts && [ -d /srv ]; then
        mount -t tmpfs -o size=50M none /srv
     fi
-	exit 1
+    exit 1
 }
 
 start() {
-	config_load storage
+    config_load storage
 
-	config_get UUID srv uuid
-        [ -n "$UUID" ] || exit 0
-	config_get OLD_UUID srv old_uuid
-	DEV=""
-	config_get_bool DBG srv debug 0
-	[ "$DBG" = 0 ] || set -x
-	[ "$DBG" = 0 ] || exec 2>> /tmp/storage_debug
-	i=0
+    config_get UUID srv uuid
+    [ -n "$UUID" ] || exit 0
+    config_get OLD_UUID srv old_uuid
+    DEV=""
+    config_get_bool DBG srv debug 0
+    [ "$DBG" = 0 ] || set -x
+    [ "$DBG" = 0 ] || exec 2>> /tmp/storage_debug
+    i=0
 
     # Make sure we have /srv
     [ -e /srv ] || mkdir -p /srv
 
-	# Try to find a drive
-	while [ $i -lt 10 ] && [ -z "$DEV" ]; do
-		DEV="$(blkid -U "$UUID")"
-		sleep 1
-		i="$(expr $i + 1)"
-	done
-	[ -n "$DEV" ] || die "Can't find disk that has $UUID uuid."
+    # Try to find a drive
+    while [ $i -lt 10 ] && [ -z "$DEV" ]; do
+        DEV="$(blkid -U "$UUID")"
+        sleep 1
+        i="$(expr $i + 1)"
+    done
+    [ -n "$DEV" ] || die "Can't find disk that has $UUID uuid."
 
-	# Symlink workaround
-	if [ -L /srv ]; then
-		link_tgt="$(readlink /srv)"
-		rm /srv
-		mkdir -p /srv
-	fi
+    # Symlink workaround
+    if [ -L /srv ]; then
+        link_tgt="$(readlink /srv)"
+        rm /srv
+        mkdir -p /srv
+    fi
 
-	# Mount it
-	btrfs device scan --all-devices
-	if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
-		mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv."
-		create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features."
-	else
-		local subvol
-		config_get subvol srv subvolume '@'
-		mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount device $DEV as /srv for data storage."
-	fi
+    # Mount it
+    btrfs device scan --all-devices
+    if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
+        mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv."
+        create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features."
+    else
+        local subvol
+        config_get subvol srv subvolume '@'
+        mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount device $DEV as /srv for data storage."
+    fi
 
-	# Find root device
-	OLD_DEV=""
-	ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
-	[ -n "$ROOT_DEV" ] || ROOT_DEV="rootfs"
-        if [ -n "$OLD_UUID" ]; then
-		if [ "x$OLD_UUID" = xrootfs ]; then
-			OLD_DEV="$ROOT_DEV"
-		else
-			OLD_DEV="$(blkid -U "$OLD_UUID")"
-		fi
-	fi
-
-	# If needed, mount old root device and migrate data
-        if [ -n "$OLD_DEV" ] || [ -n "$link_tgt" ]; then
-		mkdir -p /tmp/old-srv
-		if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-			mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
-		elif [ -n "$link_tgt" ]; then
-			mkdir -p /tmp/old-srv/srv
-			[ \! -d "$link_tgt" ] || mount -o bind /"$link_tgt" /tmp/old-srv/srv || die "Can't bind-mount $link_tgt to migrate data."
-		else
-			mkdir -p /tmp/old-srv/srv
-			mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
-		fi
-
-                # Migrate stuff
-		rainbow all enable red
-                if [ "`ls -1 /tmp/old-srv/srv | wc -l`" -gt 0 ]; then
-                        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv || die "Moving files failed, please check manually what went wrong and what files were left on your old drive."
-                        find /tmp/old-srv/srv -depth -type d -empty -delete
-                fi
-		rainbow all auto white
-
-		# Cleanup everything
-                umount -fl /tmp/old-srv/srv 2> /dev/null || :
-                umount -fl /tmp/old-srv 2> /dev/null || :
-                rmdir /tmp/old-srv/srv 2> /dev/null || :
-                rmdir /tmp/old-srv 2> /dev/null || :
-		uci set storage.srv.old_uuid=""
-		uci commit storage.srv.old_uuid
-		if [ -n "$link_tgt" ]; then
-			create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually."
-		else
-			create_notification -s news "Your /srv was successfully moved from device $OLD_DEV to $DEV device."
-		fi
+    # Find root device
+    OLD_DEV=""
+    ROOT_DEV="$(cat /proc/mounts | sed -n 's|^\(/dev/[^ ]*\) / .*|\1|p')"
+    [ -n "$ROOT_DEV" ] || ROOT_DEV="rootfs"
+    if [ -n "$OLD_UUID" ]; then
+        if [ "x$OLD_UUID" = xrootfs ]; then
+            OLD_DEV="$ROOT_DEV"
+        else
+            OLD_DEV="$(blkid -U "$OLD_UUID")"
         fi
+    fi
+
+    # We are done if there is nothing to migrate
+    if [ -z "$OLD_DEV" ] && [ -z "$link_tgt" ]; then
+        exit 0
+    fi
+
+    # Mount old root device and migrate data
+    mkdir -p /tmp/old-srv
+    if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
+        mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
+    elif [ -n "$link_tgt" ]; then
+        mkdir -p /tmp/old-srv/srv
+        [ \! -d "$link_tgt" ] || mount -o bind /"$link_tgt" /tmp/old-srv/srv || die "Can't bind-mount $link_tgt to migrate data."
+    else
+        mkdir -p /tmp/old-srv/srv
+        mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
+    fi
+
+    # Migrate stuff
+    rainbow all enable red
+    if [ "`ls -1 /tmp/old-srv/srv | wc -l`" -gt 0 ]; then
+        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv || die "Moving files failed, please check manually what went wrong and what files were left on your old drive."
+        find /tmp/old-srv/srv -depth -type d -empty -delete
+    fi
+    rainbow all auto white
+
+    # Cleanup everything
+    umount -fl /tmp/old-srv/srv 2> /dev/null || :
+    umount -fl /tmp/old-srv 2> /dev/null || :
+    rmdir /tmp/old-srv/srv 2> /dev/null || :
+    rmdir /tmp/old-srv 2> /dev/null || :
+    uci set storage.srv.old_uuid=""
+    uci commit storage.srv.old_uuid
+    if [ -n "$link_tgt" ]; then
+        create_notification -s error "Your /srv was symlink. It might not have been migrated fully. Check what was left in $link_tgt and migrate it manually."
+    else
+        create_notification -s news "Your /srv was successfully moved from device $OLD_DEV to $DEV device."
+    fi
 }
 
 stop() {
-        umount -fl /srv
+    umount -fl /srv
 }
 
 restart() {
-        :
+    :
 }
 
 reload() {
-        :
+    :
 }
