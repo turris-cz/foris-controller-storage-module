@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Changed
 - Increase persistent logs size to 100 MB in logrotate config
+- Refactor srv init script
 
 ## [0.8.1] - 2021-04-20
 ### Fixed
