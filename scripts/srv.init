@@ -48,12 +48,14 @@ start() {
     # Mount it
     btrfs device scan --all-devices
     if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
-        mount -t ext4 -o noatime "$DEV" /srv || die "Can't mount $DEV as /srv."
+        mount -t ext4 -o noatime "$DEV" /srv \
+            || die "Can't mount $DEV as /srv."
         create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features."
     else
         local subvol
         config_get subvol srv subvolume '@'
-        mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv || die "Can't mount device $DEV as /srv for data storage."
+        mount -t btrfs -o "subvol=${subvol},noatime" "$DEV" /srv \
+            || die "Can't mount device $DEV as /srv for data storage."
     fi
 
     # Find root device
@@ -76,19 +78,24 @@ start() {
     # Mount old root device and migrate data
     mkdir -p /tmp/old-srv
     if [ "$OLD_DEV" = "$ROOT_DEV" ]; then
-        mount -o bind / /tmp/old-srv || die "Can't bind-mount rootfs."
+        mount -o bind / /tmp/old-srv \
+            || die "Can't bind-mount rootfs."
     elif [ -n "$link_tgt" ]; then
         mkdir -p /tmp/old-srv/srv
-        [ \! -d "$link_tgt" ] || mount -o bind /"$link_tgt" /tmp/old-srv/srv || die "Can't bind-mount $link_tgt to migrate data."
+        [ ! -d "$link_tgt" ] \
+            || mount -o bind /"$link_tgt" /tmp/old-srv/srv \
+            || die "Can't bind-mount $link_tgt to migrate data."
     else
         mkdir -p /tmp/old-srv/srv
-        mount "$OLD_DEV" /tmp/old-srv/srv || die "Can't mount old srv - $OLD_DEV."
+        mount "$OLD_DEV" /tmp/old-srv/srv \
+            || die "Can't mount old srv - $OLD_DEV."
     fi
 
     # Migrate stuff
     rainbow all enable red
     if [ "`ls -1 /tmp/old-srv/srv | wc -l`" -gt 0 ]; then
-        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv || die "Moving files failed, please check manually what went wrong and what files were left on your old drive."
+        rsync -r -a -HXS --numeric-ids --remove-source-files /tmp/old-srv/srv/ /srv \
+            || die "Moving files failed, please check manually what went wrong and what files were left on your old drive."
         find /tmp/old-srv/srv -depth -type d -empty -delete
     fi
     rainbow all auto white
