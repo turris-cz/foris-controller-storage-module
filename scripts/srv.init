@@ -101,10 +101,10 @@ start() {
     rainbow all auto white
 
     # Cleanup everything
-    umount -fl /tmp/old-srv/srv 2> /dev/null || :
-    umount -fl /tmp/old-srv 2> /dev/null || :
-    rmdir /tmp/old-srv/srv 2> /dev/null || :
-    rmdir /tmp/old-srv 2> /dev/null || :
+    umount -fl /tmp/old-srv/srv 2> /dev/null || true
+    umount -fl /tmp/old-srv 2> /dev/null || true
+    rmdir /tmp/old-srv/srv 2> /dev/null || true
+    rmdir /tmp/old-srv 2> /dev/null || true
     uci set storage.srv.old_uuid=""
     uci commit storage.srv.old_uuid
     if [ -n "$link_tgt" ]; then
@@ -119,9 +119,9 @@ stop() {
 }
 
 restart() {
-    :
+    true
 }
 
 reload() {
-    :
+    true
 }
