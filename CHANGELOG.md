@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Restart `rainbow` service instead of hardcoded set to white in srv init script
 
 ### Fixed
+- Handle missing /srv directory in srv init script
 - Prevent to manipulate programmable LEDs on routers without `rainbow` command in srv init script
 
 ## [0.8.1] - 2021-04-20
