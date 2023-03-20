@@ -8,7 +8,7 @@ status() {
 }
 
 die() {
-    create_notification -n error "$1"
+    create_notification -s error "$1"
     if ! grep -q '^[^[:blank:]]\+[[:blank:]]\+/srv[[:blank:]]' /proc/mounts && [ -d /srv ]; then
        mount -t tmpfs -o size=50M none /srv
     fi
@@ -50,7 +50,7 @@ start() {
     if [ "$(blkid "$DEV" -s TYPE -o value)" = ext4 ]; then
         mount -t ext4 -o noatime "$DEV" /srv \
             || die "Can't mount $DEV as /srv."
-        create_notification -n error "Your srv is ext4, you should convert to btrfs to enjoy all features."
+        create_notification -s error "Your srv is ext4, you should convert to btrfs to enjoy all features."
     else
         local subvol
         config_get subvol srv subvolume '@'
