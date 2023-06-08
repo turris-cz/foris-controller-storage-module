@@ -82,13 +82,13 @@ mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,min
 def blkid_sda_ok_cmd(request):
     content = """\
         #!/bin/sh
-        if [ "$1" != "/dev/sda" ] ; then
-            exit 1
-        elif [ "$2" = "-s" ] && [ "$3" = UUID ] && [ "$4" = "-o" ] && [ "$5" = "value" ]; then
-            echo "fb002a7a-7504-4f08-882b-09eebb2b26e6"
+        if [ "$1" == "/dev/nvme0n1" ] ; then
+            echo '/dev/nvme0n1: LABEL="s\\"=:v" UUID="22222222-2222-2222-2222-222222222222" UUID_SUB="88888888-8888-8888-8888-888888888888" TYPE="btrfs"'
+        if [ "$1" == "/dev/sda" ] ; then
+            echo '/dev/sda: LABEL="srv" UUID="11111111-1111-1111-1111-111111111111" UUID_SUB="99999999-9999-9999-9999-999999999999" TYPE="btrfs"'
         else
-            echo '/dev/sda: LABEL="srv" UUID="fb002a7a-7504-4f08-882b-09eebb2b26e6" UUID_SUB="20ce89eb-6720-4d40-8b48-c114153b1202" TYPE="btrfs"'
-            echo '/dev/sdb: LABEL="s\\"=:v" UUID="fb002a7a-7504-4f08-882b-eeeeeeeeeeee" UUID_SUB="20ce89eb-6720-4d40-8b48-eeeeeeeeeeee" TYPE="btrfs"'
+            echo '/dev/sda: LABEL="srv" UUID="11111111-1111-1111-1111-111111111111" UUID_SUB="99999999-9999-9999-9999-999999999999" TYPE="btrfs"'
+            echo '/dev/nvme0n1: LABEL="s\\"=:v" UUID="22222222-2222-2222-2222-222222222222" UUID_SUB="88888888-8888-8888-8888-888888888888" TYPE="btrfs"'
         fi
     """
     with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:
@@ -172,6 +172,9 @@ def test_get_drives(
     )
     assert "data" in res
     assert "drives" in res["data"]
+    if infrastructure.backend_name != "mock":
+        # Devices from blkid_sda_ok_cmd
+        assert {"sda", "nvme0n1"} == {e["dev"] for e in res["data"]["drives"]}
 
 
 def test_prepare_srv_drive(

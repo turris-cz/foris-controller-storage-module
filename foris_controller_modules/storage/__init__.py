@@ -43,5 +43,5 @@ class StorageModule(BaseModule):
         "update_settings"
     ]
 )
-class Handler(object):
+class Handler:
     pass

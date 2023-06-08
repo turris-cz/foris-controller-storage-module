@@ -1,3 +1,4 @@
+import typing
 import logging
 import os
 import shlex
@@ -7,8 +8,6 @@ from foris_controller_backends.cmdline import BaseCmdLine
 from foris_controller_backends.files import BaseFile, inject_file_root, path_exists
 from foris_controller.exceptions import (
     FailedToParseFileContent,
-    FailedToParseCommandOutput,
-    BackendCommandFailed,
     UciException,
 )
 
@@ -45,21 +44,11 @@ class SettingsUci(BaseCmdLine, BaseFile):
         elif old_uuid == "" and not os.path.isfile(
             inject_file_root("/tmp/storage_plugin/formating")
         ):
-            # use blkid to obtain old uuid
-            cmd = ["blkid", old_device]
-            try:
-                blkid, old_uuid = self._trigger_and_parse(
-                    cmd, r'^/dev/([^:]*):.* UUID="([^"]*)".* TYPE="([^"]*)".*', (0, 2)
-                )
-            except (FailedToParseCommandOutput) as exc:
+            if output := DriveManager().parse_blkid(os.path.basename(old_device)):
+                _, _, old_uuid, _ = output
+            else:
                 raise LookupError(
-                    "Can't get UUID for device '{}' from '{}'!".format(old_device, exc.message)
-                )
-            except (BackendCommandFailed) as exc:
-                raise LookupError(
-                    "Can't get UUID for device '{}'. Command '{}' has failed! ({})".format(
-                        old_device, " ".join(cmd), exc
-                    )
+                    f"Can't get UUID for device '{old_device}'!"
                 )
 
         state = "none"
@@ -129,6 +118,39 @@ class DriveManager(BaseCmdLine, BaseFile):
 
         return "/usr/sbin/blkid"  # default path
 
+    def parse_blkid(self, device: str) -> typing.Optional[typing.Tuple[str, str, str, str]]:
+        retval, stdout, _ = self._run_command(self._find_blkid_bin(), "/dev/%s" % device)
+        if retval != 0:
+            return None
+
+        # found using blkid
+        # parse blockid output
+        stdout = stdout.decode("utf-8")
+
+        # try to cut by the first :
+        splitted = stdout.split(":", 1)
+        if len(splitted) == 1:
+            # if no : is present try to split by first space
+            splitted = stdout.split(" ", 1)
+            if len(splitted) != 2:
+                logger.warning("Failed to parse the output of blkid")
+                return None
+        device_path, variables = splitted
+
+        # -> ['TYPE=brtfs', ...]
+        parsed = shlex.split(variables)
+
+        # -> {"TYPE": "btrfs", ...}
+        parsed = dict([e.split("=", 1) for e in parsed if "=" in e])
+
+        uuid = parsed.get("UUID", "")
+        fs = parsed.get("TYPE", "")
+
+        # prepare description data
+        label = parsed.get("LABEL", "")
+
+        return os.path.basename(device_path), fs, uuid, label
+
     def get_drives(self):
         ret = []
         # Would block during formating
@@ -139,7 +161,7 @@ class DriveManager(BaseCmdLine, BaseFile):
 
         for dev in os.listdir(inject_file_root(drive_dir)):
             # skip some device
-            if not dev.startswith("sd"):
+            if not dev.startswith("sd") and not dev.startswith("nvme"):
                 continue
 
             # is device mounted somewhere
@@ -155,29 +177,11 @@ class DriveManager(BaseCmdLine, BaseFile):
             if mount == "/":
                 continue
 
-            retval, stdout, _ = self._run_command(self._find_blkid_bin(), "/dev/%s" % dev)
-            if retval == 0:
-                # found using blkid
-                # parse blockid output
-                # remove "/dev/...:"
-                stdout = stdout.decode("utf-8")
-                _, variables = stdout.split(":", 1)
-
-                # -> ['TYPE=brtfs', ...]
-                parsed = shlex.split(variables)
-
-                # -> {"TYPE": "btrfs", ...}
-                parsed = dict([e.split("=", 1) for e in parsed if "=" in e])
-
-                uuid = parsed.get("UUID", "")
-                fs = parsed.get("TYPE", "")
-
-                # prepare description data
-                label = parsed.get("LABEL", "")
+            if output := self.parse_blkid(dev):
+                _, fs, uuid, label = output
             else:
-                fs = ""
-                uuid = ""
-                label = ""
+                fs, uuid, label = "", "", ""
+
             try:
                 vendor = self._file_content("/sys/class/block/%s/device/vendor" % dev).strip()
             except IOError:
