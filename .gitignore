@@ -3,3 +3,4 @@
 .eggs/
 build/
 foris_controller_storage_module.egg-info/
+.tox/
