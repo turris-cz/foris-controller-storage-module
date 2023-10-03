@@ -3,7 +3,7 @@
 
 config_load "storage"
 config_get uuid "srv" "uuid"
-config_get_bool syslog "srv" "syslog" "1"
+config_get_bool syslog "srv" "syslog" "0"
 
 # Ignore if storage is not configured
 [ -n "$uuid" ] || return 0
