@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018-2021 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2023 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,15 +20,9 @@
 import pytest
 import textwrap
 
-from .conftest import file_root, CMDLINE_SCRIPT_ROOT
+from .conftest import CMDLINE_SCRIPT_ROOT
 
-from foris_controller_testtools.fixtures import (
-    infrastructure,
-    uci_configs_init,
-    file_root_init,
-    FILE_ROOT_PATH,
-)
-
+from foris_controller_testtools.fixtures import FILE_ROOT_PATH
 from foris_controller_testtools.utils import FileFaker
 
 

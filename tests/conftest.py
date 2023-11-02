@@ -1,6 +1,6 @@
 #
 # foris-controller-storage-module
-# Copyright (C) 2018 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
+# Copyright (C) 2018-2023 CZ.NIC, z.s.p.o. (http://www.nic.cz/)
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,17 +19,6 @@
 
 import pytest
 import os
-
-# load common fixtures
-from foris_controller_testtools.fixtures import (
-    uci_config_default_path,
-    env_overrides,
-    cmdline_script_root,
-    controller_modules,
-    extra_module_paths,
-    message_bus,
-    backend,
-)
 
 
 CMDLINE_SCRIPT_ROOT = os.path.join(os.path.dirname(os.path.realpath(__file__)), "test_root")
