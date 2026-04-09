@@ -39,66 +39,43 @@ def stat_cmd(request):
         yield f, request.param
 
 
-MOUNTS = {
-    "mounts1": """\
-/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
-proc /proc proc rw,noatime 0 0
-sysfs /sys sysfs rw,noatime 0 0
-none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
-tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
-tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
-devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
-debugfs /sys/kernel/debug debugfs rw,noatime 0 0
-mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
-""",
-    "mounts2": """\
-/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
-proc /proc proc rw,noatime 0 0
-sysfs /sys sysfs rw,noatime 0 0
-none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
-tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
-tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
-devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
-debugfs /sys/kernel/debug debugfs rw,noatime 0 0
-mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
-/dev/sda /srv btrfs rw,relatime,space_cache,subvolid=5,subvol=/ 0 0
-""",
-    "mounts3": """\
-/dev/mmcblk0p1 / btrfs rw,noatime,ssd,space_cache,commit=5,subvolid=886,subvol=/@ 0 0
-proc /proc proc rw,noatime 0 0
-sysfs /sys sysfs rw,noatime 0 0
-none /sys/fs/cgroup cgroup rw,relatime,cpuset,cpu,cpuacct,blkio,memory,devices,freezer,net_cls,pids 0 0
-tmpfs /tmp tmpfs rw,nosuid,nodev,noatime 0 0
-tmpfs /dev tmpfs rw,relatime,size=512k,mode=755 0 0
-devpts /dev/pts devpts rw,relatime,mode=600,ptmxmode=000 0 0
-debugfs /sys/kernel/debug debugfs rw,noatime 0 0
-mountd(pid3648) /tmp/run/mountd autofs rw,relatime,fd=5,pgrp=3644,timeout=60,minproto=5,maxproto=5,indirect 0 0
-/dev/sdb /srv btrfs rw,relatime,space_cache,subvolid=5,subvol=/ 0 0
-""",
-}
+SDA_JSON = (
+    '{"name": "sda", "path": "/dev/sda",'
+    ' "uuid": "11111111-1111-1111-1111-111111111111",'
+    ' "size": 8178892800, "vendor": "Generic ", "model": "Flash Disk",'
+    ' "label": "srv", "fstype": "btrfs", "mountpoints": ["/srv"]}'
+)
+NVME_JSON = (
+    '{"name": "nvme0n1", "path": "/dev/nvme0n1",'
+    ' "uuid": "22222222-2222-2222-2222-222222222222",'
+    ' "size": 7817134080, "vendor": null, "model": null,'
+    ' "label": null, "fstype": "btrfs", "mountpoints": [null]}'
+)
 
 
 @pytest.fixture(scope="function")
-def blkid_sda_ok_cmd(request):
+def lsblk_cmd(request):
     content = """\
         #!/bin/sh
-        if [ "$1" == "/dev/nvme0n1" ] ; then
-            echo '/dev/nvme0n1: LABEL="s\\"=:v" UUID="22222222-2222-2222-2222-222222222222" UUID_SUB="88888888-8888-8888-8888-888888888888" TYPE="btrfs"'
-        if [ "$1" == "/dev/sda" ] ; then
-            echo '/dev/sda: LABEL="srv" UUID="11111111-1111-1111-1111-111111111111" UUID_SUB="99999999-9999-9999-9999-999999999999" TYPE="btrfs"'
+        DEVICE=""
+        for arg in "$@"; do
+            case "$arg" in
+                -*) ;;
+                /dev/*) DEVICE="$arg" ;;
+            esac
+        done
+        if [ "$DEVICE" = "/dev/sda" ]; then
+            echo '{{"blockdevices": [{sda}]}}'
+        elif [ "$DEVICE" = "/dev/nvme0n1" ]; then
+            echo '{{"blockdevices": [{nvme}]}}'
+        elif [ -n "$DEVICE" ]; then
+            echo '{{"blockdevices": []}}'
         else
-            echo '/dev/sda: LABEL="srv" UUID="11111111-1111-1111-1111-111111111111" UUID_SUB="99999999-9999-9999-9999-999999999999" TYPE="btrfs"'
-            echo '/dev/nvme0n1: LABEL="s\\"=:v" UUID="22222222-2222-2222-2222-222222222222" UUID_SUB="88888888-8888-8888-8888-888888888888" TYPE="btrfs"'
+            echo '{{"blockdevices": [{sda}, {nvme}]}}'
         fi
-    """
-    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/sbin/blkid", True, textwrap.dedent(content)) as f:
+    """.format(sda=SDA_JSON, nvme=NVME_JSON)
+    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/bin/lsblk", True, textwrap.dedent(content)) as f:
         yield f
-
-
-@pytest.fixture(params=MOUNTS.keys(), scope="function")
-def mounts_file(request):
-    with FileFaker(FILE_ROOT_PATH, "/proc/mounts", False, MOUNTS[request.param]) as f:
-        yield f, request.param
 
 
 @pytest.fixture(params=[True, False], ids=["formatting_yes", "formatting_no"], scope="function")
@@ -127,12 +104,10 @@ def test_get_settings(
     uci_configs_init,
     infrastructure,
     stat_cmd,
-    mounts_file,
-    blkid_sda_ok_cmd,
+    lsblk_cmd,
     formatting_file,
 ):
     _, srv_mount = stat_cmd
-    _, mounts_file_id = mounts_file
     res = infrastructure.process_message(
         {"module": "storage", "action": "get_settings", "kind": "request"}
     )
@@ -148,12 +123,10 @@ def test_get_state(
     uci_configs_init,
     infrastructure,
     stat_cmd,
-    mounts_file,
-    blkid_sda_ok_cmd,
+    lsblk_cmd,
     formatting_file,
 ):
     _, srv_mount = stat_cmd
-    _, mounts_file_id = mounts_file
     res = infrastructure.process_message(
         {"module": "storage", "action": "get_state", "kind": "request"}
     )
@@ -165,7 +138,7 @@ def test_get_state(
 
 
 def test_get_drives(
-    file_root_init, uci_configs_init, infrastructure, blkid_sda_ok_cmd, mounts_file
+    file_root_init, uci_configs_init, infrastructure, lsblk_cmd
 ):
     res = infrastructure.process_message(
         {"module": "storage", "action": "get_drives", "kind": "request"}
@@ -173,7 +146,7 @@ def test_get_drives(
     assert "data" in res
     assert "drives" in res["data"]
     if infrastructure.backend_name != "mock":
-        # Devices from blkid_sda_ok_cmd
+        # Devices from lsblk_cmd
         assert {"sda", "nvme0n1"} == {e["dev"] for e in res["data"]["drives"]}
 
 
@@ -213,13 +186,11 @@ def test_update_settings(
     uci_configs_init,
     infrastructure,
     stat_cmd,
-    mounts_file,
-    blkid_sda_ok_cmd,
+    lsblk_cmd,
     formatting_file,
     state
 ):
     _, srv_mount = stat_cmd
-    _, mounts_file_id = mounts_file
 
     res = infrastructure.process_message(
         {
