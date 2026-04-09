@@ -106,10 +106,13 @@ class DriveManager(BaseCmdLine):
         if retval != 0:
             return []
         try:
-            return json.loads(stdout.decode("utf-8")).get("blockdevices", [])
+            devices = json.loads(stdout.decode("utf-8")).get("blockdevices", [])
         except (json.JSONDecodeError, UnicodeDecodeError):
             logger.warning("Failed to parse lsblk output")
             return []
+
+        # return only devices with uuid
+        return [e for e in devices if e.get("uuid")]
 
     def get_device_at_mountpoint(self, mountpoint: str) -> typing.Optional[typing.Tuple[str, str]]:
         """Return (device_path, uuid) for the device mounted at mountpoint, or None if not found."""
@@ -128,10 +131,6 @@ class DriveManager(BaseCmdLine):
 
         ret = []
         for d in self._run_lsblk():
-            name = d.get("name", "")
-            if not name.startswith("sd") and not name.startswith("nvme"):
-                continue
-
             # skip devices mounted as root
             mountpoints = d.get("mountpoints") or []
             if isinstance(mountpoints, str):
@@ -139,12 +138,8 @@ class DriveManager(BaseCmdLine):
             if "/" in mountpoints:
                 continue
 
-            uuid = d.get("uuid") or ""
-
-            # We are interested for devices with uuid
-            if not uuid:
-                continue
-
+            uuid = d["uuid"]
+            name = d.get("name", "")
             fs = d.get("fstype") or ""
             label = d.get("label") or ""
             vendor = (d.get("vendor") or "").strip()

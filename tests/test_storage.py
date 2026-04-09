@@ -39,42 +39,49 @@ def stat_cmd(request):
         yield f, request.param
 
 
+# sda: sd device, mounted at /srv — expected in get_drives
 SDA_JSON = (
     '{"name": "sda", "path": "/dev/sda",'
     ' "uuid": "11111111-1111-1111-1111-111111111111",'
     ' "size": 8178892800, "vendor": "Generic ", "model": "Flash Disk",'
     ' "label": "srv", "fstype": "btrfs", "mountpoints": ["/srv"]}'
 )
+# nvme0n1: nvme device, not mounted — expected in get_drives
 NVME_JSON = (
     '{"name": "nvme0n1", "path": "/dev/nvme0n1",'
     ' "uuid": "22222222-2222-2222-2222-222222222222",'
     ' "size": 7817134080, "vendor": null, "model": null,'
     ' "label": null, "fstype": "btrfs", "mountpoints": [null]}'
 )
+# mmcblk0p1: non-sd/nvme device with UUID, not mounted at root — expected in get_drives
+# (sd/nvme name filter was removed; all devices with UUID and not at / are now included)
+MMCBLK0P1_JSON = (
+    '{"name": "mmcblk0p1", "path": "/dev/mmcblk0p1",'
+    ' "uuid": "33333333-3333-3333-3333-333333333333",'
+    ' "size": 3908042752, "vendor": null, "model": null,'
+    ' "label": null, "fstype": "btrfs", "mountpoints": [null]}'
+)
+# mmcblk0p2: non-sd/nvme device mounted at / — must be excluded from get_drives
+MMCBLK0P2_JSON = (
+    '{"name": "mmcblk0p2", "path": "/dev/mmcblk0p2",'
+    ' "uuid": "44444444-4444-4444-4444-444444444444",'
+    ' "size": 1048576, "vendor": null, "model": null,'
+    ' "label": null, "fstype": "btrfs", "mountpoints": ["/"]}'
+)
+# mmcblk0: whole-disk device with no UUID — must be excluded by _run_lsblk UUID filter
+MMCBLK0_JSON = (
+    '{"name": "mmcblk0", "path": "/dev/mmcblk0",'
+    ' "uuid": null, "size": 3909091328, "vendor": null, "model": null,'
+    ' "label": null, "fstype": null, "mountpoints": [null]}'
+)
+
+_ALL_DEVICES = ", ".join([SDA_JSON, NVME_JSON, MMCBLK0P1_JSON, MMCBLK0P2_JSON, MMCBLK0_JSON])
 
 
 @pytest.fixture(scope="function")
 def lsblk_cmd(request):
-    content = """\
-        #!/bin/sh
-        DEVICE=""
-        for arg in "$@"; do
-            case "$arg" in
-                -*) ;;
-                /dev/*) DEVICE="$arg" ;;
-            esac
-        done
-        if [ "$DEVICE" = "/dev/sda" ]; then
-            echo '{{"blockdevices": [{sda}]}}'
-        elif [ "$DEVICE" = "/dev/nvme0n1" ]; then
-            echo '{{"blockdevices": [{nvme}]}}'
-        elif [ -n "$DEVICE" ]; then
-            echo '{{"blockdevices": []}}'
-        else
-            echo '{{"blockdevices": [{sda}, {nvme}]}}'
-        fi
-    """.format(sda=SDA_JSON, nvme=NVME_JSON)
-    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/bin/lsblk", True, textwrap.dedent(content)) as f:
+    content = "#!/bin/sh\ncat << 'EOF'\n" + '{"blockdevices": [' + _ALL_DEVICES + "]}\nEOF\n"
+    with FileFaker(CMDLINE_SCRIPT_ROOT, "/usr/bin/lsblk", True, content) as f:
         yield f
 
 
@@ -146,8 +153,11 @@ def test_get_drives(
     assert "data" in res
     assert "drives" in res["data"]
     if infrastructure.backend_name != "mock":
-        # Devices from lsblk_cmd
-        assert {"sda", "nvme0n1"} == {e["dev"] for e in res["data"]["drives"]}
+        # sda and nvme0n1: sd/nvme devices with UUID, not at /
+        # mmcblk0p1: non-sd/nvme device with UUID, not at / — included since name filter was removed
+        # mmcblk0p2: excluded because it is mounted at /
+        # mmcblk0: excluded because it has no UUID
+        assert {"sda", "nvme0n1", "mmcblk0p1"} == {e["dev"] for e in res["data"]["drives"]}
 
 
 def test_prepare_srv_drive(
