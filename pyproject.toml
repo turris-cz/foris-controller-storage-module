@@ -27,6 +27,9 @@ tests = [
 [project.urls]
 Homepage = "https://gitlab.nic.cz/turris/foris-controller/foris-controller-storage-module"
 
+[project.entry-points.foris_controller_modules]
+storage = "foris_controller_modules.storage"
+
 [tool.hatch.version]
 path = "foris_controller_storage_module/__init__.py"
 
